@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>TruckConduite 3D - Convoi Exceptionnel Réaliste</title>
+    <title>TruckConduite 3D - Édition Simulator Pro</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #090d16; touch-action: none; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #050811; touch-action: none; }
         
         #hud-top {
             position: absolute; top: 8px; left: 8px; right: 8px;
             display: flex; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 5;
         }
         .panel {
-            background: rgba(10, 15, 28, 0.88); color: #f8fafc;
+            background: rgba(10, 14, 26, 0.9); color: #f8fafc;
             padding: 8px 12px; border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            pointer-events: auto; backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            pointer-events: auto; backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
         }
         h1 { margin: 0 0 4px 0; font-size: 14px; color: #f59e0b; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
         .stat-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin: 2px 0; }
@@ -30,21 +30,21 @@
         .btn-grid { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
         .btn-sm {
             background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
-            padding: 5px 7px; border-radius: 6px; font-size: 11px; font-weight: bold;
+            padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;
             cursor: pointer;
         }
         .btn-sm.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         #warning-banner {
             position: absolute; top: 145px; left: 50%; transform: translateX(-50%);
-            background: rgba(220, 38, 38, 0.94); color: white; padding: 7px 16px;
+            background: rgba(220, 38, 38, 0.95); color: white; padding: 7px 16px;
             border-radius: 8px; font-weight: bold; font-size: 13px; display: none; text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 15; border: 1px solid #fca5a5;
         }
         
         #modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(15, 23, 42, 0.97); color: white; padding: 24px;
+            background: rgba(15, 23, 42, 0.98); color: white; padding: 24px;
             border-radius: 14px; border: 2px solid #10b981; text-align: center;
             display: none; z-index: 30; width: 88%; max-width: 360px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.8);
@@ -60,13 +60,13 @@
         }
         .control-group { display: flex; gap: 8px; pointer-events: auto; align-items: flex-end; }
         .t-btn {
-            background: rgba(15, 23, 42, 0.82); color: white; border: 2px solid rgba(255,255,255,0.22);
+            background: rgba(15, 23, 42, 0.85); color: white; border: 2px solid rgba(255,255,255,0.22);
             border-radius: 12px; font-weight: bold; font-size: 14px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
         }
         .t-btn:active, .t-btn.pressed { background: rgba(245, 158, 11, 0.92); color: #000; border-color: #fff; }
-        .steer-btn { width: 64px; height: 64px; font-size: 22px; }
+        .steer-btn { width: 66px; height: 66px; font-size: 22px; }
         .horn-btn { width: 46px; height: 46px; font-size: 18px; border-color: #f59e0b; }
         .pedal-btn { width: 54px; height: 80px; font-size: 11px; }
         .pedal-clutch { height: 66px; border-color: #38bdf8; }
@@ -81,8 +81,8 @@
 
     <div id="hud-top">
         <div class="panel" style="min-width: 175px;">
-            <h1>🚛 TruckConduite</h1>
-            <div class="stat-row"><span>Mode :</span> <span class="val" id="vehicle-mode">TOMBREAU</span></div>
+            <h1>🚛 TruckConduite Pro</h1>
+            <div class="stat-row"><span>Véhicule :</span> <span class="val" id="vehicle-mode">TOMBREAU</span></div>
             <div class="stat-row"><span>Vitesse :</span> <span class="val" id="speed">0 km/h</span></div>
             <div class="stat-row"><span>Rapport :</span> <span class="val" id="gear-display">N</span></div>
             <div class="stat-row"><span>Régime :</span> <span class="val" id="rpm-val">800 tr/m</span></div>
@@ -96,9 +96,9 @@
         </div>
 
         <div class="panel" style="max-width: 215px; border-left: 4px solid #f59e0b;">
-            <strong style="color:#f59e0b; font-size: 12px;">🎯 CONVOI EXCEPTIONNEL</strong>
+            <strong style="color:#f59e0b; font-size: 12px;">🎯 MISSION ROUTIÈRE</strong>
             <p id="mission-text" style="font-size: 11.5px; margin: 4px 0; line-height: 1.35; color: #e2e8f0;">
-                1. Baissez les rampes (B) et montez le tombereau sur le porte-char.
+                1. Baissez les rampes (B) et chargez le tombereau.
             </p>
             <div class="stat-row"><span>Attelage :</span> <span class="val" id="angle">0°</span></div>
             <div class="stat-row"><span>Distance :</span> <span class="val" id="dist-goal">295 m</span></div>
@@ -185,70 +185,71 @@
             osc2.stop(audioCtx.currentTime + 0.65);
         }
 
-        // --- TEXTURE ROUTE RÉALISTE ---
+        // --- TEXTURES HAUTE FIDÉLITÉ ---
         function createAsphaltTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 512; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1e242b'; ctx.fillRect(0, 0, 512, 512);
-            for (let i = 0; i < 18000; i++) {
-                const v = 22 + Math.floor(Math.random() * 25);
-                ctx.fillStyle = `rgb(${v},${v+3},${v+7})`;
+            ctx.fillStyle = '#171c24'; ctx.fillRect(0, 0, 512, 512);
+            for (let i = 0; i < 22000; i++) {
+                const v = 18 + Math.floor(Math.random() * 28);
+                ctx.fillStyle = `rgb(${v},${v+3},${v+8})`;
                 ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
             }
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(18, 0, 10, 512);
-            ctx.fillRect(484, 0, 10, 512);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(16, 0, 10, 512);
+            ctx.fillRect(486, 0, 10, 512);
             ctx.fillStyle = '#facc15';
-            ctx.fillRect(252, 40, 8, 180);
-            ctx.fillRect(252, 300, 8, 180);
+            ctx.fillRect(252, 35, 8, 190);
+            ctx.fillRect(252, 285, 8, 190);
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
             return tex;
         }
 
-        function createGaugeTexture(maxLabel, unit) {
+        function createDashboardTexture() {
             const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 256;
+            canvas.width = 512; canvas.height = 256;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#090d16'; ctx.beginPath(); ctx.arc(128, 128, 124, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6;
-            ctx.beginPath(); ctx.arc(128, 128, 118, 0.75 * Math.PI, 2.25 * Math.PI); ctx.stroke();
-            ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText(unit, 128, 185);
-            ctx.font = '18px sans-serif';
-            ctx.fillText('0', 60, 195);
-            ctx.fillText(maxLabel, 196, 195);
-            return new THREE.CanvasTexture(canvas);
+            ctx.fillStyle = '#0b0f19'; ctx.fillRect(0, 0, 512, 256);
+            ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, 492, 236);
+            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 24px sans-serif';
+            ctx.fillText('TRUCKCONDUITE OS', 30, 50);
+            ctx.fillStyle = '#10b981'; ctx.font = '18px sans-serif';
+            ctx.fillText('GPS : ITINÉRAIRE ACTIF - NORD', 30, 95);
+            ctx.fillText('PRESSION AIR : 10.2 BAR', 30, 135);
+            const tex = new THREE.CanvasTexture(canvas);
+            return tex;
         }
 
-        // --- SCÈNE 3D & ENVIRONNEMENT ---
+        // --- SCÈNE 3D & ENVIRONNEMENT PRO ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x7dd3fc);
-        scene.fog = new THREE.FogExp2(0x7dd3fc, 0.0028);
+        scene.background = new THREE.Color(0x38bdf8);
+        scene.fog = new THREE.FogExp2(0x38bdf8, 0.0022);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 800);
+        const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 900);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xfffbeb, 0.95);
-        sun.position.set(120, 180, 90);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const sun = new THREE.DirectionalLight(0xfffbeb, 1.0);
+        sun.position.set(140, 200, 100);
         sun.castShadow = true;
         sun.shadow.mapSize.width = 2048;
         sun.shadow.mapSize.height = 2048;
-        const d = 160;
+        const d = 180;
         sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
         sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
         scene.add(sun);
 
-        // Sol paysager
+        // Sol herbeux
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1200, 1200),
-            new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.9 })
+            new THREE.PlaneGeometry(1400, 1400),
+            new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.9 })
         );
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
@@ -256,52 +257,55 @@
 
         // Route principale
         const roadTex = createAsphaltTexture();
-        roadTex.repeat.set(1, 40);
+        roadTex.repeat.set(1, 45);
         const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(18, 800),
-            new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.85 })
+            new THREE.PlaneGeometry(18, 900),
+            new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.8 })
         );
         road.rotation.x = -Math.PI / 2;
         road.position.set(14, 0.05, 0);
         road.receiveShadow = true;
         scene.add(road);
 
-        // Collines d'arrière-plan (inspirées de la photo)
-        const hillMat = new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.9 });
-        for (let i = -3; i <= 3; i++) {
-            const hill = new THREE.Mesh(new THREE.ConeGeometry(140 + Math.random() * 50, 70, 16), hillMat);
-            hill.position.set(i * 220, 30, -350 + Math.random() * 50);
+        // Barrières de sécurité (Guardrails) le long de la route
+        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+        for (let z = -400; z <= 400; z += 20) {
+            const postL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.4), guardrailMat);
+            postL.position.set(4.8, 0.4, z);
+            const railL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.4, 20.2), guardrailMat);
+            railL.position.set(4.8, 0.6, z);
+            scene.add(postL, railL);
+        }
+
+        // Collines d'arrière-plan
+        const hillMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.95 });
+        for (let i = -4; i <= 4; i++) {
+            const hill = new THREE.Mesh(new THREE.ConeGeometry(160 + Math.random() * 60, 80, 16), hillMat);
+            hill.position.set(i * 240, 35, -450 + Math.random() * 60);
             scene.add(hill);
         }
 
-        // Aire de départ industrielle
-        const yard = new THREE.Mesh(
-            new THREE.PlaneGeometry(18, 65),
-            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 })
-        );
-        yard.rotation.x = -Math.PI / 2;
-        yard.position.set(-8, 0.05, -55);
-        yard.receiveShadow = true;
+        // Zone de départ & Arrivée
+        const yard = new THREE.Mesh(new THREE.PlaneGeometry(18, 65), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+        yard.rotation.x = -Math.PI / 2; yard.position.set(-8, 0.05, -55); yard.receiveShadow = true;
         scene.add(yard);
 
-        // Zone de livraison finale
         const deliveryZone = new THREE.Mesh(
             new THREE.PlaneGeometry(7, 24),
-            new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.55 })
+            new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.6 })
         );
-        deliveryZone.rotation.x = -Math.PI / 2;
-        deliveryZone.position.set(-8, 0.06, 250);
+        deliveryZone.rotation.x = -Math.PI / 2; deliveryZone.position.set(-8, 0.06, 280);
         scene.add(deliveryZone);
 
-        // --- MATÉRIAUX CAMION TYPE MERCEDES ACTROS BLANC & CONVOI EXCEPTIONNEL ---
+        // --- MATÉRIAUX CAMION & CONVOI EXCEPTIONNEL ---
         const matChassis = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.6 });
-        const matTruckCab = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.1 }); // BLANC PUR COMME LA PHOTO
+        const matTruckCab = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.1 });
         const matChrome = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.1, metalness: 0.95 });
-        const matGlass = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.28 });
-        const matDash = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+        const matGlass = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.25 });
+        const matDash = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.75 });
         const matTrailer = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5 });
         const matRamp = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4 });
-        const matTombereau = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.3 }); // Jaune chantier
+        const matTombereau = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.3 });
         const matTire = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85 });
 
         function makeWheel(x, y, z, r = 0.55) {
@@ -315,7 +319,7 @@
             return group;
         }
 
-        // --- TRACTEUR ROUTIER BLANC & BANDEAU CONVOI EXCEPTIONNEL ---
+        // --- TRACTEUR ROUTIER BLANC & CONVOI EXCEPTIONNEL ---
         const tractor = new THREE.Group();
         scene.add(tractor);
 
@@ -335,14 +339,11 @@
         const cabFrontLower = new THREE.Mesh(new THREE.BoxGeometry(2.48, 1.05, 0.22), matTruckCab);
         cabFrontLower.position.set(0, 0.52, 1.1);
 
-        // Calandre chromée style Mercedes Actros
         const grille = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.75, 0.08), matChrome);
         grille.position.set(0, 0.45, 1.22);
 
-        // BANDEAU ORANGE "CONVOI EXCEPTIONNEL" (Exactement comme sur la photo 1 !)
-        const bSignGeo = new THREE.BoxGeometry(1.8, 0.32, 0.08);
-        const bSignMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-        const convoisSign = new THREE.Mesh(bSignGeo, bSignMat);
+        // Bandeau Convoi Exceptionnel
+        const convoisSign = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.32, 0.08), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
         convoisSign.position.set(0, 1.25, 1.22);
         cabGroup.add(convoisSign);
 
@@ -352,7 +353,6 @@
         const hlR = hlL.clone(); hlR.position.x = 0.98;
         cabGroup.add(grille, hlL, hlR);
 
-        // Gyrophares orange
         const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff9800 });
         const beaconL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.18, 12), beaconMat);
         beaconL.position.set(-0.85, 2.64, 0.6);
@@ -374,25 +374,22 @@
 
         cabGroup.add(cabFloor, cabRoof, cabBack, cabFrontLower, pillarL, pillarR, doorL, doorR, windshield);
 
-        // --- INTÉRIEUR COCKPIT ---
+        // --- INTÉRIEUR COCKPIT PRO (Style Truckers of Europe 3) ---
         const interior = new THREE.Group();
         cabGroup.add(interior);
+
         const dashboard = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.55, 0.6), matDash);
         dashboard.position.set(0, 0.95, 0.8);
         interior.add(dashboard);
 
-        const speedDial = new THREE.Mesh(new THREE.CircleGeometry(0.105, 24), new THREE.MeshBasicMaterial({ map: createGaugeTexture('120', 'KM/H') }));
-        speedDial.position.set(-0.69, 1.25, 0.55); speedDial.rotation.set(0.3, Math.PI, 0);
-        const rpmDial = new THREE.Mesh(new THREE.CircleGeometry(0.105, 24), new THREE.MeshBasicMaterial({ map: createGaugeTexture('30', 'x100') }));
-        rpmDial.position.set(-0.41, 1.25, 0.55); rpmDial.rotation.set(0.3, Math.PI, 0);
-        interior.add(speedDial, rpmDial);
-
-        const needleMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-        const speedNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.075, 0.01), needleMat);
-        speedNeedle.position.set(-0.69, 1.25, 0.54); speedNeedle.rotation.x = 0.3;
-        const rpmNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.075, 0.01), needleMat);
-        rpmNeedle.position.set(-0.41, 1.25, 0.54); rpmNeedle.rotation.x = 0.3;
-        interior.add(speedNeedle, rpmNeedle);
+        // Écran tactile GPS central (identique aux captures)
+        const gpsScreen = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.48, 0.3),
+            new THREE.MeshBasicMaterial({ map: createDashboardTexture() })
+        );
+        gpsScreen.position.set(0.05, 1.22, 0.54);
+        gpsScreen.rotation.set(0.25, Math.PI, 0);
+        interior.add(gpsScreen);
 
         const steeringWheelGroup = new THREE.Group();
         steeringWheelGroup.position.set(-0.55, 1.12, 0.35); steeringWheelGroup.rotation.x = -0.62;
@@ -402,7 +399,6 @@
         wheelHub.rotation.x = Math.PI / 2;
         steeringWheelGroup.add(wheelRim, wheelHub);
 
-        // Roues Tracteur
         const wheelFL = makeWheel(-1.25, 0.55, 2.1);
         const wheelFR = makeWheel(1.25, 0.55, 2.1);
         tractor.add(wheelFL, wheelFR);
@@ -434,7 +430,7 @@
         rampR.position.set(0.85, 0, -1.3);
         rampPivot.add(rampL, rampR);
 
-        // --- ENGIN DE CHANTIER : TOMBREAU ARTICULÉ (Comme sur la photo 1) ---
+        // --- TOMBREAU DE CHANTIER (CHARGEMENT) ---
         const tombereau = new THREE.Group();
         scene.add(tombereau);
 
@@ -444,13 +440,12 @@
         trCab.position.set(0, 1.2, 0.8); trCab.castShadow = true;
         const trGlass = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.7, 1.2), matGlass);
         trGlass.position.set(0, 1.45, 0.9);
-        // Grande benne basculante caractéristique du tombereau
         const trBenne = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.2, 3.2), matTombereau);
         trBenne.position.set(0, 1.5, -1.1); trBenne.rotation.x = -0.1; trBenne.castShadow = true;
 
         tombereau.add(trChassis, trCab, trGlass, trBenne);
 
-        // --- ÉTAT DU JEU ---
+        // --- ÉTAT DU SIMULATEUR ---
         let sim = {
             phase: 'LOADING',
             isManual: true,
@@ -555,7 +550,7 @@
             sim.camMode = 0; document.getElementById('btn-cam').innerText = "EXTERNE";
             document.getElementById('modal').style.display = 'none';
             document.getElementById('vehicle-mode').innerText = "TOMBREAU";
-            document.getElementById('mission-text').innerText = "1. Baissez les rampes (B) et montez le tombereau sur le porte-char.";
+            document.getElementById('mission-text').innerText = "1. Baissez les rampes (B) et chargez le tombereau.";
         }
 
         const wheelBase = 4.2; const hitchOffset = -1.5; const trailerLength = 9.8;
@@ -651,10 +646,6 @@
                 tombereau.rotation.y = sim.trailerAngle;
 
                 steeringWheelGroup.rotation.z = -sim.steerAngle * 4.5;
-                const speedRatio = Math.min(1, Math.abs(sim.speed) / 22);
-                const rpmRatio = Math.min(1, sim.rpm / 3000);
-                speedNeedle.rotation.z = 2.1 - speedRatio * 4.2;
-                rpmNeedle.rotation.z = 2.1 - rpmRatio * 4.2;
 
                 document.getElementById('speed').innerText = `${Math.abs(Math.round(sim.speed * 3.6))} km/h`;
                 document.getElementById('gear-display').innerText = sim.gear === 0 ? 'N' : (sim.gear === -1 ? 'R' : 'D' + sim.gear);
@@ -664,11 +655,11 @@
                 const jackknife = Math.round(Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle)) * 180 / Math.PI);
                 document.getElementById('angle').innerText = `${jackknife}°`;
 
-                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - 250));
+                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - 280));
                 document.getElementById('dist-goal').innerText = `${distGoal} m`;
 
                 if (distGoal < 4.0 && Math.abs(sim.speed) < 0.15) {
-                    document.getElementById('modal-desc').innerText = "Convoi exceptionnel livré avec succès !";
+                    document.getElementById('modal-desc').innerText = "Convoi exceptionnel livré avec succès au chantier Nord !";
                     document.getElementById('modal').style.display = 'block';
                 }
             }
