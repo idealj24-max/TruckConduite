@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>TruckConduite 3D - Ultimate Simulator Pro</title>
+    <title>TruckConduite Pro - Ultimate City Simulator</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #030712; touch-action: none; }
@@ -14,7 +14,7 @@
             display: flex; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 5;
         }
         .panel {
-            background: rgba(10, 14, 26, 0.94); color: #f8fafc;
+            background: rgba(10, 14, 26, 0.95); color: #f8fafc;
             padding: 8px 12px; border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             pointer-events: auto; backdrop-filter: blur(12px);
@@ -82,7 +82,7 @@
     <div id="hud-top">
         <div class="panel" style="min-width: 175px;">
             <h1>🚛 TruckConduite Pro</h1>
-            <div class="stat-row"><span>Véhicule :</span> <span class="val" id="vehicle-mode">TOMBREAU</span></div>
+            <div class="stat-row"><span>Véhicule :</span> <span class="val" id="vehicle-mode">TOMBREAU CHENILLES</span></div>
             <div class="stat-row"><span>Vitesse :</span> <span class="val" id="speed">0 km/h</span></div>
             <div class="stat-row"><span>Rapport :</span> <span class="val" id="gear-display">N</span></div>
             <div class="stat-row"><span>Régime :</span> <span class="val" id="rpm-val">800 tr/m</span></div>
@@ -96,7 +96,7 @@
         </div>
 
         <div class="panel" style="max-width: 215px; border-left: 4px solid #f59e0b;">
-            <strong style="color:#f59e0b; font-size: 12px;">🎯 CONVOI EXCEPTIONNEL</strong>
+            <strong style="color:#f59e0b; font-size: 12px;" id="mission-title">🎯 MISSION 1 : CHARGEMENT</strong>
             <p id="mission-text" style="font-size: 11.5px; margin: 4px 0; line-height: 1.35; color: #e2e8f0;">
                 1. Baissez les rampes (B) et chargez le tombereau.
             </p>
@@ -109,9 +109,9 @@
     <div id="warning-banner">⚠️ ALERTE</div>
 
     <div id="modal">
-        <h2 style="color:#10b981; margin:0 0 10px 0;">🎉 Livraison Réussie !</h2>
+        <h2 style="color:#10b981; margin:0 0 10px 0;" id="modal-title">🎉 Étape Réussie !</h2>
         <p id="modal-desc" style="font-size:14px; color:#cbd5e1; line-height: 1.4;"></p>
-        <button onclick="resetGame()">Nouvelle Mission</button>
+        <button id="modal-btn" onclick="nextMissionStage()">Continuer la Mission</button>
     </div>
 
     <div id="touch-controls">
@@ -135,7 +135,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- AUDIO HORS-LIGNE ---
+        // --- AUDIO ---
         let audioCtx = null;
         let engineOsc = null;
         let engineGain = null;
@@ -180,7 +180,7 @@
             osc1.stop(audioCtx.currentTime + 0.65); osc2.stop(audioCtx.currentTime + 0.65);
         }
 
-        // --- TEXTURES & GRAPHISMES PRO ---
+        // --- TEXTURES & GRAPHISMES ---
         function createAsphaltTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 512; canvas.height = 512;
@@ -214,19 +214,19 @@
             return new THREE.CanvasTexture(canvas);
         }
 
-        // --- SCÈNE 3D & ÉCLAIRAGE ---
+        // --- SCÈNE 3D ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x38bdf8);
-        scene.fog = new THREE.FogExp2(0x38bdf8, 0.0018);
+        scene.fog = new THREE.FogExp2(0x38bdf8, 0.0016);
 
-        const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 1200);
+        const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 1400);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.85));
         const sun = new THREE.DirectionalLight(0xfffbeb, 1.1);
         sun.position.set(160, 220, 120);
         sun.castShadow = true;
@@ -238,35 +238,35 @@
 
         // Sol paysager
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1600, 1600),
+            new THREE.PlaneGeometry(1800, 1800),
             new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.9 })
         );
         ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
         scene.add(ground);
 
-        // Route goudronnée principale
+        // Route principale
         const roadTex = createAsphaltTexture();
-        roadTex.repeat.set(1, 60);
+        roadTex.repeat.set(1, 80);
         const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(18, 1200),
+            new THREE.PlaneGeometry(18, 1600),
             new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.75 })
         );
         road.rotation.x = -Math.PI / 2; road.position.set(14, 0.05, 0); road.receiveShadow = true;
         scene.add(road);
 
-        // --- BÂTIMENTS DE LA VILLE & MAP ---
+        // Bâtiments de la ville & Gratte-ciels
         const bldgMat = new THREE.MeshStandardMaterial({ map: createBuildingTexture(), roughness: 0.4 });
         function addBuilding(x, z, w, d, h) {
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bldgMat);
             mesh.position.set(x, h / 2, z); mesh.castShadow = true; mesh.receiveShadow = true;
             scene.add(mesh);
         }
-        for (let z = -400; z <= 400; z += 60) {
-            addBuilding(38, z, 30, 35, 55);
-            addBuilding(-32, z, 28, 30, 48);
+        for (let z = -600; z <= 600; z += 55) {
+            addBuilding(38, z, 30, 35, 65);
+            addBuilding(-32, z, 28, 30, 52);
         }
 
-        // Zone de départ & Arrivée
+        // Zones de mission en ville
         const yard = new THREE.Mesh(new THREE.PlaneGeometry(18, 65), new THREE.MeshStandardMaterial({ color: 0x334155 }));
         yard.rotation.x = -Math.PI / 2; yard.position.set(-8, 0.05, -55); yard.receiveShadow = true;
         scene.add(yard);
@@ -278,7 +278,14 @@
         deliveryZone.rotation.x = -Math.PI / 2; deliveryZone.position.set(-8, 0.06, 350);
         scene.add(deliveryZone);
 
-        // --- TRAFIC ROUTIER INTÉLLIGENT ---
+        const deliveryZone2 = new THREE.Mesh(
+            new THREE.PlaneGeometry(7, 26),
+            new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.65 })
+        );
+        deliveryZone2.rotation.x = -Math.PI / 2; deliveryZone2.position.set(-8, 0.06, 700);
+        scene.add(deliveryZone2);
+
+        // --- TRAFIC ROUTIER ---
         const trafficCars = [];
         function createTrafficCar(x, z, dir, color) {
             const car = new THREE.Group();
@@ -290,14 +297,14 @@
             car.position.set(x, 0.05, z);
             car.rotation.y = dir === 'N' ? 0 : Math.PI;
             scene.add(car);
-            trafficCars.push({ mesh: car, dir, baseSpeed: 11 + Math.random() * 5, speed: 12 });
+            trafficCars.push({ mesh: car, dir, speed: 13 + Math.random() * 4 });
         }
-        createTrafficCar(18.0, -200, 'N', 0xdc2626);
-        createTrafficCar(18.0, 100, 'N', 0x2563eb);
-        createTrafficCar(10.0, 250, 'S', 0xf8fafc);
-        createTrafficCar(10.0, -50, 'S', 0x059669);
+        createTrafficCar(18.0, -300, 'N', 0xdc2626);
+        createTrafficCar(18.0, 150, 'N', 0x2563eb);
+        createTrafficCar(10.0, 400, 'S', 0xf8fafc);
+        createTrafficCar(10.0, -100, 'S', 0x059669);
 
-        // --- MATÉRIAUX CAMION & CONVOI EXCEPTIONNEL ULTRA-RÉALISTES ---
+        // --- MATÉRIAUX & MODÈLES CAMION ---
         const matChassis = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.5 });
         const matCabWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.2 });
         const matChrome = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.08, metalness: 0.98 });
@@ -307,6 +314,9 @@
         const matRamp = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4 });
         const matTombereau = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.3 });
         const matTire = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85 });
+        const matTrack = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9, metalness: 0.5 });
+        const matSkin = new THREE.MeshStandardMaterial({ color: 0xfca5a5, roughness: 0.6 });
+        const matShirt = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.7 });
 
         function makeWheel(x, y, z, r = 0.55) {
             const group = new THREE.Group();
@@ -358,54 +368,45 @@
         const beaconR = beaconL.clone(); beaconR.position.x = 0.85;
         cabGroup.add(beaconL, beaconR);
 
-        const pillarL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.1), matCabWhite);
-        pillarL.position.set(-1.18, 1.75, 1.1);
-        const pillarR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.1), matCabWhite);
-        pillarR.position.set(1.18, 1.75, 1.1);
-
-        const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.05, 2.2), matCabWhite);
-        doorL.position.set(-1.2, 0.52, 0);
-        const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.05, 2.2), matCabWhite);
-        doorR.position.set(1.2, 0.52, 0);
-
         const windshield = new THREE.Mesh(new THREE.PlaneGeometry(2.25, 1.35), matGlass);
         windshield.position.set(0, 1.75, 1.1); windshield.rotation.y = Math.PI;
+        cabGroup.add(cabFloor, cabRoof, cabBack, cabFrontLower, windshield);
 
-        cabGroup.add(cabFloor, cabRoof, cabBack, cabFrontLower, pillarL, pillarR, doorL, doorR, windshield);
+        // --- CONDUCTEUR DANS LA CABINE (MAINS SUR LE VOLANT) ---
+        const driverGroup = new THREE.Group();
+        driverGroup.position.set(-0.55, 0.95, 0.45);
+        cabGroup.add(driverGroup);
 
-        // --- CAMÉRA INTÉRIEURE (AVEC ÉCRANS DE RÉTROVISION LATÉRAUX DE LA 1ère CAPTURE) ---
+        const bodyDriver = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.85, 0.5), matShirt);
+        bodyDriver.position.y = 0.42;
+        const handL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.25), matSkin);
+        handL.position.set(-0.28, 0.22, -0.15);
+        const handR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.25), matSkin);
+        handR.position.set(0.28, 0.22, -0.15);
+        const headDriver = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.38, 0.35), matSkin);
+        headDriver.position.set(0, 0.92, -0.05);
+        driverGroup.add(bodyDriver, handL, handR, headDriver);
+
+        // Volant & Tableau de bord interactif
+        const steeringWheelGroup = new THREE.Group();
+        steeringWheelGroup.position.set(-0.55, 1.12, 0.35); steeringWheelGroup.rotation.x = -0.62;
+        cabGroup.add(steeringWheelGroup);
+        const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.024, 12, 32), matChassis);
+        const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.04, 16), matRamp);
+        wheelHub.rotation.x = Math.PI / 2;
+        steeringWheelGroup.add(wheelRim, wheelHub);
+
+        // Écrans de rétrovision latéraux cabine
         const mirrorRenderTargetL = new THREE.WebGLRenderTarget(256, 512);
         const mirrorRenderTargetR = new THREE.WebGLRenderTarget(256, 512);
         const mirrorCamL = new THREE.PerspectiveCamera(45, 0.5, 0.5, 300);
         const mirrorCamR = new THREE.PerspectiveCamera(45, 0.5, 0.5, 300);
 
-        // Écrans verticaux sur les montants de cabine (comme sur la photo de référence)
-        const screenMatL = new THREE.MeshBasicMaterial({ map: mirrorRenderTargetL.texture });
-        const screenMatR = new THREE.MeshBasicMaterial({ map: mirrorRenderTargetR.texture });
-
-        const mirrorScreenL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatL);
+        const mirrorScreenL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), new THREE.MeshBasicMaterial({ map: mirrorRenderTargetL.texture }));
         mirrorScreenL.position.set(-1.18, 1.75, 0.6);
-        
-        const mirrorScreenR1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatR);
-        mirrorScreenR1.position.set(1.18, 1.75, 0.6);
-        const mirrorScreenR2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatR);
-        mirrorScreenR2.position.set(1.18, 2.55, 0.6);
-        
-        cabGroup.add(mirrorScreenL, mirrorScreenR1, mirrorScreenR2);
-
-        const interior = new THREE.Group();
-        cabGroup.add(interior);
-        const dashboard = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.55, 0.6), matDash);
-        dashboard.position.set(0, 0.95, 0.8);
-        interior.add(dashboard);
-
-        const steeringWheelGroup = new THREE.Group();
-        steeringWheelGroup.position.set(-0.55, 1.12, 0.35); steeringWheelGroup.rotation.x = -0.62;
-        interior.add(steeringWheelGroup);
-        const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.024, 12, 32), matChassis);
-        const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.04, 16), matRamp);
-        wheelHub.rotation.x = Math.PI / 2;
-        steeringWheelGroup.add(wheelRim, wheelHub);
+        const mirrorScreenR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), new THREE.MeshBasicMaterial({ map: mirrorRenderTargetR.texture }));
+        mirrorScreenR.position.set(1.18, 1.75, 0.6);
+        cabGroup.add(mirrorScreenL, mirrorScreenR);
 
         const wheelFL = makeWheel(-1.25, 0.55, 2.1);
         const wheelFR = makeWheel(1.25, 0.55, 2.1);
@@ -413,7 +414,7 @@
         tractor.add(makeWheel(-1.25, 0.55, -1.2), makeWheel(1.25, 0.55, -1.2));
         tractor.add(makeWheel(-1.25, 0.55, -2.4), makeWheel(1.25, 0.55, -2.4));
 
-        // --- REMORQUE PORTE-CHAR & TOMBREAU ---
+        // --- REMORQUE & TOMBREAU ULTRA-RÉALISTE (AVEC CHENILLES / PNEUS SPéCIAUX) ---
         const trailer = new THREE.Group();
         scene.add(trailer);
         const neck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.42, 3.2), matCabWhite);
@@ -438,21 +439,27 @@
         rampR.position.set(0.85, 0, -1.3);
         rampPivot.add(rampL, rampR);
 
+        // Tombereau de chantier avec chenilles robustes & benne renforcée
         const tombereau = new THREE.Group();
         scene.add(tombereau);
-        const trChassis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 3.2), matChassis);
-        trChassis.position.y = 0.3;
-        const trCab = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.3, 1.5), matTombereau);
-        trCab.position.set(0, 1.2, 0.8); trCab.castShadow = true;
-        const trGlass = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.7, 1.2), matGlass);
-        trGlass.position.set(0, 1.45, 0.9);
-        const trBenne = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.2, 3.2), matTombereau);
-        trBenne.position.set(0, 1.5, -1.1); trBenne.rotation.x = -0.1; trBenne.castShadow = true;
-        tombereau.add(trChassis, trCab, trGlass, trBenne);
+        const trChassis = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.6, 3.6), matChassis);
+        trChassis.position.y = 0.35;
+        const trCab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.35, 1.6), matTombereau);
+        trCab.position.set(0, 1.25, 0.9); trCab.castShadow = true;
+        const trGlass = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.7, 1.25), matGlass);
+        trGlass.position.set(0, 1.5, 1.0);
+        const trBenne = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.3, 3.6), matTombereau);
+        trBenne.position.set(0, 1.6, -1.1); trBenne.rotation.x = -0.1; trBenne.castShadow = true;
 
-        // --- ÉTAT DU SIMULATEUR ---
+        // Chenilles réalistes latérales du tombereau
+        const trackL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 3.4), matTrack);
+        trackL.position.set(-1.25, 0.28, 0);
+        const trackR = trackL.clone(); trackR.position.x = 1.25;
+        tombereau.add(trChassis, trCab, trGlass, trBenne, trackL, trackR);
+
+        // --- ÉTAT DU JEU & MISSIONS ---
         let sim = {
-            phase: 'LOADING', isManual: true, camMode: 0,
+            phase: 'LOADING', missionStep: 1, isManual: true, camMode: 0,
             rampsDown: false, rampAngle: -1.35,
             exX: -8, exZ: -74, exY: 0, exAngle: 0, exSpeed: 0,
             x: -8, z: -52, tractorAngle: 0, trailerAngle: 0,
@@ -534,15 +541,34 @@
             warnTimeout = setTimeout(() => el.style.display = 'none', 2500);
         }
 
+        function nextMissionStage() {
+            document.getElementById('modal').style.display = 'none';
+            if (sim.missionStep === 1) {
+                sim.missionStep = 2;
+                document.getElementById('mission-title').innerText = "🎯 MISSION 2 : CENTRE-VILLE";
+                document.getElementById('mission-text').innerText = "2. Conduisez vers la zone commerciale de la ville (350m).";
+                deliveryZone.position.set(-8, 0.06, 350);
+            } else if (sim.missionStep === 2) {
+                sim.missionStep = 3;
+                document.getElementById('mission-title').innerText = "🎯 MISSION 3 : CHANTIER NORD";
+                document.getElementById('mission-text').innerText = "3. Terminez le trajet vers le chantier final au Nord (700m).";
+                deliveryZone.position.set(-8, 0.06, 700);
+            } else {
+                resetGame();
+            }
+        }
+
         function resetGame() {
-            sim.phase = 'LOADING'; sim.rampsDown = false; sim.rampAngle = -1.35;
+            sim.phase = 'LOADING'; sim.missionStep = 1; sim.rampsDown = false; sim.rampAngle = -1.35;
             sim.exX = -8; sim.exZ = -74; sim.exY = 0; sim.exAngle = 0; sim.exSpeed = 0;
             sim.x = -8; sim.z = -52; sim.tractorAngle = 0; sim.trailerAngle = 0;
             sim.speed = 0; sim.steerAngle = 0; sim.gear = 0; sim.rpm = 800; sim.stalled = false;
             sim.camMode = 0; document.getElementById('btn-cam').innerText = "EXTERNE";
             document.getElementById('modal').style.display = 'none';
-            document.getElementById('vehicle-mode').innerText = "TOMBREAU";
+            document.getElementById('vehicle-mode').innerText = "TOMBREAU CHENILLES";
+            document.getElementById('mission-title').innerText = "🎯 MISSION 1 : CHARGEMENT";
             document.getElementById('mission-text').innerText = "1. Baissez les rampes (B) et chargez le tombereau.";
+            deliveryZone.position.set(-8, 0.06, 350);
         }
 
         const wheelBase = 4.2; const hitchOffset = -1.5; const trailerLength = 9.8;
@@ -587,8 +613,9 @@
                     sim.phase = 'DRIVING'; sim.rampsDown = false; sim.camMode = 1;
                     document.getElementById('btn-cam').innerText = "CABINE";
                     document.getElementById('vehicle-mode').innerText = "CONVOI EXCEPTIONNEL";
-                    document.getElementById('mission-text').innerText = "2. Conduisez le convoi vers la zone de livraison au Nord !";
-                    showWarning("Tombereau arrimé ! Convoi prêt.");
+                    document.getElementById('mission-title').innerText = "🎯 MISSION 2 : CENTRE-VILLE";
+                    document.getElementById('mission-text').innerText = "2. Conduisez vers la zone commerciale de la ville (350m).";
+                    showWarning("Tombereau arrimé ! Mission lancée.");
                 }
             } else {
                 const maxSteer = 0.52;
@@ -607,7 +634,7 @@
                     sim.rpm = 800 + (Math.abs(sim.speed) % 3.4) * 540;
                 } else {
                     if (sim.stalled) {
-                        sim.rpm = 0; sim.speed *= 0.92; showWarning("MOTEUR CALÉ ! Passez au Point Mort (N).");
+                        sim.rpm = 0; sim.speed *= 0.92; showWarning("MOTEUR CALÉ ! Point Mort (N).");
                     } else if (sim.gear === 0 || input.clutch) {
                         sim.rpm += ((input.gas ? 2600 : 800) - sim.rpm) * 6 * dt;
                         sim.speed *= 0.985;
@@ -647,11 +674,16 @@
                 const jackknife = Math.round(Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle)) * 180 / Math.PI);
                 document.getElementById('angle').innerText = `${jackknife}°`;
 
-                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - 350));
+                const targetZ = sim.missionStep === 2 ? 350 : 700;
+                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - targetZ));
                 document.getElementById('dist-goal').innerText = `${distGoal} m`;
 
-                if (distGoal < 4.0 && Math.abs(sim.speed) < 0.15) {
-                    document.getElementById('modal-desc').innerText = "Convoi exceptionnel livré avec succès au chantier Nord !";
+                if (distGoal < 5.0 && Math.abs(sim.speed) < 0.15) {
+                    document.getElementById('modal-title').innerText = `🎉 Étape ${sim.missionStep} Réussie !`;
+                    document.getElementById('modal-desc').innerText = sim.missionStep === 2 ? 
+                        "Livraison réussie au Centre-Ville ! Préparez la suite vers le Nord." :
+                        "Mission complète ! Convoi exceptionnel arrivé au chantier final.";
+                    document.getElementById('modal-btn').innerText = sim.missionStep === 2 ? "Étape Suivante" : "Recommencer";
                     document.getElementById('modal').style.display = 'block';
                 }
             }
@@ -664,21 +696,19 @@
             const hZ = sim.z + Math.cos(sim.tractorAngle) * hitchOffset;
             trailer.position.set(hX, 0, hZ); trailer.rotation.y = sim.trailerAngle;
 
-            // Mise à jour du trafic routier
             trafficCars.forEach(car => {
-                if (car.dir === 'N') { car.mesh.position.z += car.speed * dt; if (car.mesh.position.z > 400) car.mesh.position.z = -400; }
-                if (car.dir === 'S') { car.mesh.position.z -= car.speed * dt; if (car.mesh.position.z < -400) car.mesh.position.z = 400; }
+                if (car.dir === 'N') { car.mesh.position.z += car.speed * dt; if (car.mesh.position.z > 750) car.mesh.position.z = -600; }
+                if (car.dir === 'S') { car.mesh.position.z -= car.speed * dt; if (car.mesh.position.z < -600) car.mesh.position.z = 750; }
             });
         }
 
-        // --- RENDU DES ÉCRANS DE RÉTROVISION LATÉRAUX ---
+        // --- RENDU DES ÉCRANS DE RÉTROVISION ---
         function updateMirrors() {
             if (sim.camMode !== 1 || sim.phase !== 'DRIVING') return;
             const sinA = Math.sin(sim.tractorAngle); const cosA = Math.cos(sim.tractorAngle);
 
             mirrorCamL.position.set(sim.x - cosA * 1.6 + sinA * 2.5, 2.8, sim.z + sinA * 1.6 + cosA * 2.5);
             mirrorCamL.lookAt(sim.x - sinA * 30, 1.2, sim.z - cosA * 30);
-
             mirrorCamR.position.set(sim.x + cosA * 1.6 + sinA * 2.5, 2.8, sim.z - sinA * 1.6 + cosA * 2.5);
             mirrorCamR.lookAt(sim.x - sinA * 30, 1.2, sim.z - cosA * 30);
 
