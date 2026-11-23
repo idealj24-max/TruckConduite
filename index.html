@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>TruckConduite 3D - Simulateur Poids Lourd & Porte-Char</title>
+    <title>TruckConduite 3D - Cockpit Réaliste & Porte-Char</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #0f172a; touch-action: none; }
@@ -17,7 +17,7 @@
             background: rgba(15, 23, 42, 0.88); color: #f8fafc;
             padding: 10px 14px; border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            pointer-events: auto; backdrop-filter: blur(4px);
+            pointer-events: auto; backdrop-filter: blur(6px);
         }
         h1 { margin: 0 0 6px 0; font-size: 16px; color: #f59e0b; letter-spacing: 0.5px; }
         .stat-row { display: flex; justify-content: space-between; gap: 15px; font-size: 13px; margin: 3px 0; }
@@ -35,14 +35,17 @@
 
         #warning-banner {
             position: absolute; top: 130px; left: 50%; transform: translateX(-50%);
-            background: rgba(239, 68, 68, 0.92); color: white; padding: 8px 18px;
+            background: rgba(239, 68, 68, 0.95); color: white; padding: 8px 18px;
             border-radius: 8px; font-weight: bold; font-size: 14px; display: none; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10;
         }
+        
         #modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(15, 23, 42, 0.96); color: white; padding: 24px;
+            background: rgba(15, 23, 42, 0.98); color: white; padding: 25px;
             border-radius: 14px; border: 2px solid #10b981; text-align: center;
-            display: none; z-index: 20; width: 85%; max-width: 360px;
+            display: none; z-index: 30; width: 85%; max-width: 360px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         #modal button {
             margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px;
@@ -55,12 +58,12 @@
         }
         .control-group { display: flex; gap: 10px; pointer-events: auto; align-items: flex-end; }
         .t-btn {
-            background: rgba(30, 41, 59, 0.85); color: white; border: 2px solid rgba(255,255,255,0.25);
+            background: rgba(30, 41, 59, 0.88); color: white; border: 2px solid rgba(255,255,255,0.25);
             border-radius: 12px; font-weight: bold; font-size: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .t-btn:active, .t-btn.pressed { background: rgba(245, 158, 11, 0.85); color: #000; border-color: #fff; }
-        .steer-btn { width: 65px; height: 65px; font-size: 24px; }
+        .t-btn:active, .t-btn.pressed { background: rgba(245, 158, 11, 0.9); color: #000; border-color: #fff; }
+        .steer-btn { width: 68px; height: 68px; font-size: 24px; }
         .pedal-btn { width: 58px; height: 85px; font-size: 12px; }
         .pedal-clutch { height: 70px; border-color: #38bdf8; }
         .pedal-brake { height: 75px; border-color: #ef4444; }
@@ -73,26 +76,26 @@
 <body>
 
     <div id="hud-top">
-        <div class="panel" style="min-width: 175px;">
+        <div class="panel" style="min-width: 185px;">
             <h1>🚛 TruckConduite</h1>
-            <div class="stat-row"><span>Mode :</span> <span class="val" id="vehicle-mode">ENGIN (Pelleteuse)</span></div>
+            <div class="stat-row"><span>Véhicule :</span> <span class="val" id="vehicle-mode">PELLETEUSE</span></div>
             <div class="stat-row"><span>Vitesse :</span> <span class="val" id="speed">0 km/h</span></div>
             <div class="stat-row"><span>Rapport :</span> <span class="val" id="gear-display">N</span></div>
             <div class="stat-row"><span>Régime :</span> <span class="val" id="rpm-val">800 tr/m</span></div>
             <div id="rpm-bar-bg"><div id="rpm-bar"></div></div>
             <div style="margin-top:6px; display:flex; gap:5px; flex-wrap:wrap;">
-                <button class="btn-sm active" id="btn-trans" onclick="toggleTransmission()">Boîte: MANUELLE</button>
-                <button class="btn-sm" onclick="cycleCamera()">Caméra (C)</button>
+                <button class="btn-sm active" id="btn-trans" onclick="toggleTransmission()">MANU</button>
+                <button class="btn-sm active" id="btn-cam" onclick="cycleCamera()">Vue: EXTERNE</button>
                 <button class="btn-sm" onclick="toggleRamps()">Rampes (B)</button>
             </div>
         </div>
 
-        <div class="panel" style="max-width: 240px; border-left: 4px solid #f59e0b;">
-            <strong style="color:#f59e0b; font-size: 13px;">🎯 ÉTAPE EN COURS</strong>
+        <div class="panel" style="max-width: 250px; border-left: 4px solid #f59e0b;">
+            <strong style="color:#f59e0b; font-size: 13px;">🎯 MISSION & OBJECTIF</strong>
             <p id="mission-text" style="font-size: 12px; margin: 5px 0; line-height: 1.35;">
-                1. Abaissez les rampes (B) et montez la pelleteuse sur le porte-char.
+                1. Montez la pelleteuse sur le porte-char (baissez les rampes avec B).
             </p>
-            <div class="stat-row"><span>Angle remorque :</span> <span class="val" id="angle">0°</span></div>
+            <div class="stat-row"><span>Attelage :</span> <span class="val" id="angle">0°</span></div>
             <button class="btn-sm" onclick="resetGame()" style="width:100%; margin-top:4px;">Recommencer (R)</button>
         </div>
     </div>
@@ -100,9 +103,9 @@
     <div id="warning-banner">⚠️ ALERTE</div>
 
     <div id="modal">
-        <h2 id="modal-title" style="color:#10b981; margin:0 0 10px 0;">Mission Accomplie !</h2>
+        <h2 style="color:#10b981; margin:0 0 10px 0;">🎉 Mission Réussie !</h2>
         <p id="modal-desc" style="font-size:14px; color:#cbd5e1;"></p>
-        <button onclick="resetGame()">Rejouer le parcours</button>
+        <button onclick="resetGame()">Recommencer la tournée</button>
     </div>
 
     <div id="touch-controls">
@@ -125,70 +128,101 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
+        // --- SCÈNE ET MOTEUR 3D ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x7dd3fc);
-        scene.fog = new THREE.Fog(0x7dd3fc, 50, 260);
+        scene.background = new THREE.Color(0x38bdf8);
+        scene.fog = new THREE.Fog(0x38bdf8, 60, 320);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 600);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
+        // Éclairage
         scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-        const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-        sun.position.set(60, 100, 40);
+        const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+        sun.position.set(100, 150, 80);
         sun.castShadow = true;
         sun.shadow.mapSize.width = 2048;
         sun.shadow.mapSize.height = 2048;
         scene.add(sun);
 
+        // --- MONDE (VILLE & ROUTES) ---
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(500, 500),
-            new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.9 })
+            new THREE.PlaneGeometry(800, 800),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 })
         );
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(14, 450),
-            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 })
-        );
-        road.rotation.x = -Math.PI / 2;
-        road.position.set(14, 0.02, 0);
-        road.receiveShadow = true;
-        scene.add(road);
+        const matRoad = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+        const matLine = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
 
-        for (let z = -200; z <= 200; z += 10) {
-            const line = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.25, 4.5),
-                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
-            );
+        function createRoad(x, z, w, h) {
+            const road = new THREE.Mesh(new THREE.PlaneGeometry(w, h), matRoad);
+            road.rotation.x = -Math.PI / 2;
+            road.position.set(x, 0.02, z);
+            road.receiveShadow = true;
+            scene.add(road);
+        }
+
+        createRoad(0, 0, 18, 600);
+        createRoad(0, -50, 450, 18);
+        createRoad(0, 150, 450, 18);
+
+        for (let z = -280; z <= 280; z += 12) {
+            const line = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 6), matLine);
             line.rotation.x = -Math.PI / 2;
-            line.position.set(14, 0.03, z);
+            line.position.set(0, 0.03, z);
             scene.add(line);
         }
 
+        // Immeubles & Zone industrielle
+        const matBuilding1 = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 });
+        const matBuilding2 = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4 });
+        const matGlassBldg = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.8 });
+
+        function createBuilding(x, z, w, d, h, mat = matBuilding1) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            b.position.set(x, h / 2, z);
+            b.castShadow = true;
+            b.receiveShadow = true;
+            scene.add(b);
+        }
+
+        createBuilding(-50, -120, 40, 35, 18, matBuilding2);
+        createBuilding(50, -120, 50, 30, 12, matBuilding1);
+
+        for (let xPos of [-75, 75]) {
+            for (let zPos of [40, 90, 210, 260]) {
+                createBuilding(xPos, zPos, 35, 35, 35 + Math.random() * 25, Math.random() > 0.5 ? matGlassBldg : matBuilding1);
+            }
+        }
+
         const yard = new THREE.Mesh(
-            new THREE.PlaneGeometry(18, 45),
+            new THREE.PlaneGeometry(20, 50),
             new THREE.MeshStandardMaterial({ color: 0x334155 })
         );
         yard.rotation.x = -Math.PI / 2;
-        yard.position.set(-2, 0.02, -30);
+        yard.position.set(-2, 0.02, -50);
         scene.add(yard);
 
         const deliveryZone = new THREE.Mesh(
-            new THREE.PlaneGeometry(5, 19),
-            new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.45 })
+            new THREE.PlaneGeometry(6, 22),
+            new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.5 })
         );
         deliveryZone.rotation.x = -Math.PI / 2;
-        deliveryZone.position.set(-2, 0.04, 85);
+        deliveryZone.position.set(-2, 0.04, 230);
         scene.add(deliveryZone);
 
+        // --- MATÉRIAUX VÉHICULES ---
         const matChassis = new THREE.MeshStandardMaterial({ color: 0x0f172a });
         const matCab = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 });
-        const matGlass = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1 });
+        const matGlass = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.25 });
+        const matDash = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
         const matTrailer = new THREE.MeshStandardMaterial({ color: 0x475569 });
         const matRamp = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
         const matCat = new THREE.MeshStandardMaterial({ color: 0xeab308 });
@@ -202,6 +236,7 @@
             return w;
         }
 
+        // --- TRACTEUR ROUTIER AVEC CABINE INTÉRIEURE DÉTAILLÉE ---
         const tractor = new THREE.Group();
         scene.add(tractor);
 
@@ -210,24 +245,161 @@
         tChassis.castShadow = true;
         tractor.add(tChassis);
 
-        const cab = new THREE.Mesh(new THREE.BoxGeometry(2.45, 2.5, 2.3), matCab);
-        cab.position.set(0, 2.35, 1.8);
-        cab.castShadow = true;
-        tractor.add(cab);
+        // Structure externe de la cabine (avec pare-brise transparent pour voir à travers)
+        const cabGroup = new THREE.Group();
+        cabGroup.position.set(0, 1.2, 1.8);
+        tractor.add(cabGroup);
 
-        const windshield = new THREE.Mesh(new THREE.BoxGeometry(2.25, 1.0, 0.1), matGlass);
-        windshield.position.set(0, 2.7, 2.96);
-        tractor.add(windshield);
+        // Plancher, toit, paroi arrière et montants
+        const cabFloor = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.2, 2.3), matDash);
+        const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.2, 2.3), matCab);
+        cabRoof.position.y = 2.4;
+        const cabBack = new THREE.Mesh(new THREE.BoxGeometry(2.45, 2.4, 0.15), matCab);
+        cabBack.position.set(0, 1.2, -1.08);
+        const cabFrontLower = new THREE.Mesh(new THREE.BoxGeometry(2.45, 1.0, 0.2), matCab);
+        cabFrontLower.position.set(0, 0.5, 1.08);
+        
+        // Montants pare-brise gauche et droit
+        const pillarL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.4, 0.15), matCab);
+        pillarL.position.set(-1.15, 1.7, 1.08);
+        const pillarR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.4, 0.15), matCab);
+        pillarR.position.set(1.15, 1.7, 1.08);
 
+        // Portières basses gauche et droite
+        const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.1, 2.2), matCab);
+        doorL.position.set(-1.18, 0.55, 0);
+        const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.1, 2.2), matCab);
+        doorR.position.set(1.18, 0.55, 0);
+
+        // Pare-brise vitré transparent
+        const windshield = new THREE.Mesh(new THREE.PlaneGeometry(2.15, 1.3), matGlass);
+        windshield.position.set(0, 1.7, 1.08);
+        windshield.rotation.y = Math.PI;
+
+        cabGroup.add(cabFloor, cabRoof, cabBack, cabFrontLower, pillarL, pillarR, doorL, doorR, windshield);
+
+        // --- INTÉRIEUR COCKPIT : TABLEAU DE BORD, VOLANT, COMPTEURS, LEVIER ---
+        const interior = new THREE.Group();
+        cabGroup.add(interior);
+
+        // Tableau de bord principal
+        const dashboard = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.55, 0.65), matDash);
+        dashboard.position.set(0, 0.95, 0.78);
+        interior.add(dashboard);
+
+        // Bloc Compteurs (Combiné d'instruments devant le conducteur à gauche : X = -0.6)
+        const clusterBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.65, 0.28, 0.15),
+            new THREE.MeshBasicMaterial({ color: 0x090d16 })
+        );
+        clusterBox.position.set(-0.6, 1.25, 0.65);
+        clusterBox.rotation.x = -0.35;
+        interior.add(clusterBox);
+
+        // Cadran Vitesse (Gauche) & Cadran Régime Moteur (Droite)
+        const dialGeo = new THREE.CircleGeometry(0.1, 24);
+        const dialMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+        const speedDial = new THREE.Mesh(dialGeo, dialMat);
+        speedDial.position.set(-0.73, 1.26, 0.57);
+        speedDial.rotation.set(0.35, Math.PI, 0);
+        
+        const rpmDial = new THREE.Mesh(dialGeo, dialMat);
+        rpmDial.position.set(-0.47, 1.26, 0.57);
+        rpmDial.rotation.set(0.35, Math.PI, 0);
+        interior.add(speedDial, rpmDial);
+
+        // Aiguilles lumineuses animées
+        const needleMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+        const speedNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.08, 0.01), needleMat);
+        speedNeedle.position.set(-0.73, 1.26, 0.56);
+        speedNeedle.rotation.x = 0.35;
+
+        const rpmNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.08, 0.01), needleMat);
+        rpmNeedle.position.set(-0.47, 1.26, 0.56);
+        rpmNeedle.rotation.x = 0.35;
+        interior.add(speedNeedle, rpmNeedle);
+
+        // Écran GPS / Télémétrie sur console centrale
+        const gpsScreen = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.35, 0.22),
+            new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+        );
+        gpsScreen.position.set(0.05, 1.18, 0.55);
+        gpsScreen.rotation.set(0.25, Math.PI, 0);
+        interior.add(gpsScreen);
+
+        // Volant Poids Lourd (grand diamètre, incliné comme un vrai camion)
+        const steeringWheelGroup = new THREE.Group();
+        steeringWheelGroup.position.set(-0.6, 1.15, 0.35);
+        steeringWheelGroup.rotation.x = -0.65; // Inclinaison typique poids lourd
+        interior.add(steeringWheelGroup);
+
+        const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.025, 12, 32), matChassis);
+        const wheelSpoke1 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.04, 0.02), matChassis);
+        const wheelSpoke2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.02), matChassis);
+        wheelSpoke2.position.y = -0.13;
+        const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 16), matRamp);
+        wheelHub.rotation.x = Math.PI / 2;
+        steeringWheelGroup.add(wheelRim, wheelSpoke1, wheelSpoke2, wheelHub);
+
+        // Levier de vitesses manuel (Console centrale droite du siège conducteur)
+        const gearConsole = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.5), matDash);
+        gearConsole.position.set(-0.15, 0.3, 0.15);
+        interior.add(gearConsole);
+
+        const gearStickPivot = new THREE.Group();
+        gearStickPivot.position.set(-0.15, 0.45, 0.15);
+        interior.add(gearStickPivot);
+
+        const gearShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.42, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8 }));
+        gearShaft.position.y = 0.21;
+        const gearKnob = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), matRamp);
+        gearKnob.position.y = 0.42;
+        gearStickPivot.add(gearShaft, gearKnob);
+
+        // --- RÉTROVISEURS LATÉRAUX FONCTIONNELS (CAMÉRAS + RENDU TEMPS RÉEL) ---
+        const mirrorRenderTargetL = new THREE.WebGLRenderTarget(256, 512);
+        const mirrorRenderTargetR = new THREE.WebGLRenderTarget(256, 512);
+
+        const mirrorCamL = new THREE.PerspectiveCamera(45, 0.5, 0.5, 250);
+        const mirrorCamR = new THREE.PerspectiveCamera(45, 0.5, 0.5, 250);
+
+        // Boîtier Rétroviseur Gauche
+        const mirrorBoxL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.52, 0.08), matChassis);
+        mirrorBoxL.position.set(-1.35, 1.55, 0.95);
+        mirrorBoxL.rotation.y = 0.35;
+        const mirrorGlassL = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.20, 0.48),
+            new THREE.MeshBasicMaterial({ map: mirrorRenderTargetL.texture })
+        );
+        mirrorGlassL.position.set(-1.33, 1.55, 0.91);
+        mirrorGlassL.rotation.y = Math.PI + 0.35;
+        mirrorGlassL.scale.x = -1; // Effet miroir inversé réaliste
+        cabGroup.add(mirrorBoxL, mirrorGlassL);
+
+        // Boîtier Rétroviseur Droit
+        const mirrorBoxR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.52, 0.08), matChassis);
+        mirrorBoxR.position.set(1.35, 1.55, 0.95);
+        mirrorBoxR.rotation.y = -0.35;
+        const mirrorGlassR = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.20, 0.48),
+            new THREE.MeshBasicMaterial({ map: mirrorRenderTargetR.texture })
+        );
+        mirrorGlassR.position.set(1.33, 1.55, 0.91);
+        mirrorGlassR.rotation.y = Math.PI - 0.35;
+        mirrorGlassR.scale.x = -1;
+        cabGroup.add(mirrorBoxR, mirrorGlassR);
+
+        // Roues du tracteur
         const wheelFL = makeWheel(-1.25, 0.55, 2.1);
         const wheelFR = makeWheel(1.25, 0.55, 2.1);
         tractor.add(wheelFL, wheelFR);
         tractor.add(makeWheel(-1.25, 0.55, -1.2), makeWheel(1.25, 0.55, -1.2));
         tractor.add(makeWheel(-1.25, 0.55, -2.4), makeWheel(1.25, 0.55, -2.4));
 
+        // --- REMORQUE PORTE-CHAR ---
         const trailer = new THREE.Group();
         scene.add(trailer);
-
         const neck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 3.2), matCab);
         neck.position.set(0, 1.4, -1.4);
         trailer.add(neck);
@@ -253,9 +425,9 @@
         rampR.position.set(0.85, 0, -1.3);
         rampPivot.add(rampL, rampR);
 
+        // --- ENGIN DE CHANTIER (PELLETEUSE) ---
         const excavator = new THREE.Group();
         scene.add(excavator);
-
         const tracks = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.55, 3.4), matChassis);
         tracks.position.y = 0.28;
         const exBody = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1, 2.3), matCat);
@@ -268,8 +440,9 @@
         exArm.rotation.x = 0.35;
         excavator.add(tracks, exBody, exCab, exArm);
 
+        // --- TRAFIC ROUTIER ---
         const trafficCars = [];
-        function createTrafficCar(laneX, startZ, dir, color) {
+        function createTrafficCar(x, z, dir, color) {
             const car = new THREE.Group();
             const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 4.4), new THREE.MeshStandardMaterial({ color }));
             body.position.y = 0.8;
@@ -277,25 +450,26 @@
             const roof = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.7, 2.2), matGlass);
             roof.position.set(0, 1.65, -0.2);
             car.add(body, roof);
-            car.position.set(laneX, 0, startZ);
-            car.rotation.y = dir > 0 ? 0 : Math.PI;
+            car.position.set(x, 0, z);
+            car.rotation.y = dir === 'N' ? 0 : (dir === 'S' ? Math.PI : (dir === 'E' ? -Math.PI/2 : Math.PI/2));
             scene.add(car);
-            trafficCars.push({ mesh: car, laneX, dir, baseSpeed: 9 + Math.random() * 4, speed: 10 });
+            trafficCars.push({ mesh: car, dir, baseSpeed: 8 + Math.random() * 5, speed: 10 });
         }
 
-        createTrafficCar(17.5, -80, 1, 0xef4444);
-        createTrafficCar(17.5, 20, 1, 0x3b82f6);
-        createTrafficCar(10.5, 120, -1, 0xf8fafc);
-        createTrafficCar(10.5, 10, -1, 0x10b981);
+        createTrafficCar(4, -100, 'N', 0xef4444);
+        createTrafficCar(-4, 80, 'S', 0x3b82f6);
+        createTrafficCar(100, -50, 'W', 0xf8fafc);
+        createTrafficCar(-100, 150, 'E', 0x10b981);
 
+        // --- ÉTAT DU SIMULATEUR ---
         let sim = {
             phase: 'LOADING',
             isManual: true,
-            camMode: 0,
+            camMode: 0, // 0: Externe, 1: Cockpit Intérieur, 2: Vue Aérienne
             rampsDown: false,
             rampAngle: -1.35,
-            exX: -2, exZ: -48, exY: 0, exAngle: 0, exSpeed: 0,
-            x: -2, z: -26,
+            exX: -2, exZ: -68, exY: 0, exAngle: 0, exSpeed: 0,
+            x: -2, z: -46,
             tractorAngle: 0,
             trailerAngle: 0,
             speed: 0,
@@ -306,7 +480,6 @@
         };
 
         const gearRatios = { '-1': -3.8, '0': 0, '1': 4.2, '2': 2.8, '3': 2.0, '4': 1.45, '5': 1.1, '6': 0.85 };
-
         const input = { left: false, right: false, gas: false, brake: false, clutch: false };
 
         function bindTouch(id, key) {
@@ -350,7 +523,7 @@
         function toggleTransmission() {
             sim.isManual = !sim.isManual;
             const btn = document.getElementById('btn-trans');
-            btn.innerText = sim.isManual ? "Boîte: MANUELLE" : "Boîte: AUTO";
+            btn.innerText = sim.isManual ? "MANU" : "AUTO";
             btn.classList.toggle('active', sim.isManual);
             document.getElementById('manual-shifter').style.display = sim.isManual ? 'flex' : 'none';
             document.getElementById('btn-clutch').style.display = sim.isManual ? 'flex' : 'none';
@@ -360,7 +533,7 @@
         function shiftGear(dir) {
             if (!sim.isManual || sim.phase !== 'DRIVING') return;
             if (!input.clutch) {
-                showWarning("Appuyez sur l'EMBRAYAGE (E / EMB) pour changer de vitesse !");
+                showWarning("Appuyez sur EMBRAYAGE (E) pour changer de rapport !");
                 return;
             }
             sim.gear = Math.max(-1, Math.min(6, sim.gear + dir));
@@ -377,6 +550,8 @@
 
         function cycleCamera() {
             sim.camMode = (sim.camMode + 1) % 3;
+            const labels = ["Vue: EXTERNE", "Vue: CABINE", "Vue: DRONE"];
+            document.getElementById('btn-cam').innerText = labels[sim.camMode];
         }
 
         let warnTimeout;
@@ -392,12 +567,12 @@
             sim.phase = 'LOADING';
             sim.rampsDown = false;
             sim.rampAngle = -1.35;
-            sim.exX = -2; sim.exZ = -48; sim.exY = 0; sim.exAngle = 0; sim.exSpeed = 0;
-            sim.x = -2; sim.z = -26; sim.tractorAngle = 0; sim.trailerAngle = 0;
+            sim.exX = -2; sim.exZ = -68; sim.exY = 0; sim.exAngle = 0; sim.exSpeed = 0;
+            sim.x = -2; sim.z = -46; sim.tractorAngle = 0; sim.trailerAngle = 0;
             sim.speed = 0; sim.steerAngle = 0; sim.gear = 0; sim.rpm = 800; sim.stalled = false;
             document.getElementById('modal').style.display = 'none';
-            document.getElementById('vehicle-mode').innerText = "ENGIN (Pelleteuse)";
-            document.getElementById('mission-text').innerText = "1. Abaissez les rampes (B) et montez la pelleteuse sur le porte-char.";
+            document.getElementById('vehicle-mode').innerText = "PELLETEUSE";
+            document.getElementById('mission-text').innerText = "1. Montez la pelleteuse sur le porte-char (baissez les rampes avec B).";
         }
 
         const wheelBase = 4.2;
@@ -406,7 +581,7 @@
 
         function update(dt) {
             const targetRamp = sim.rampsDown ? 0.28 : -1.35;
-            sim.rampAngle += (targetRamp - sim.rampAngle) * 5 * dt;
+            sim.rampAngle += (targetRamp - sim.rampAngle) * 6 * dt;
             rampPivot.rotation.x = sim.rampAngle;
 
             if (sim.phase === 'LOADING') {
@@ -414,8 +589,8 @@
                 else if (input.brake) sim.exSpeed = -2.5;
                 else sim.exSpeed *= 0.8;
 
-                if (input.left) sim.exAngle += 1.2 * dt;
-                if (input.right) sim.exAngle -= 1.2 * dt;
+                if (input.left) sim.exAngle += 1.3 * dt;
+                if (input.right) sim.exAngle -= 1.3 * dt;
 
                 sim.exX += Math.sin(sim.exAngle) * sim.exSpeed * dt;
                 sim.exZ += Math.cos(sim.exAngle) * sim.exSpeed * dt;
@@ -428,7 +603,7 @@
                 if (Math.abs(sim.exX - sim.x) < 1.3 && sim.exZ > rampStartZ && sim.exZ < bedEndZ) {
                     if (!sim.rampsDown && sim.exZ < bedStartZ) {
                         sim.exZ = rampStartZ;
-                        showWarning("Abaissez les rampes avec le bouton RAMPES (B) !");
+                        showWarning("Abaissez les rampes (B) avant de monter !");
                     } else if (sim.exZ <= bedStartZ) {
                         const progress = (sim.exZ - rampStartZ) / (bedStartZ - rampStartZ);
                         sim.exY = Math.max(0, progress * 0.9);
@@ -448,12 +623,14 @@
                 if (sim.exY >= 0.88 && sim.exZ > hitchZ - 9.5 && sim.exZ < hitchZ - 5.5 && Math.abs(sim.exSpeed) < 0.2) {
                     sim.phase = 'DRIVING';
                     sim.rampsDown = false;
-                    document.getElementById('vehicle-mode').innerText = "CAMION PORTE-CHAR";
-                    document.getElementById('mission-text').innerText = "2. Rejoignez la route à droite et garez le porte-char dans la zone verte au Nord !";
-                    showWarning("Engin arrimé ! Rampes relevées. Démarrez le poids lourd !");
+                    sim.camMode = 1; // Passe automatiquement en vue intérieure cabine !
+                    document.getElementById('btn-cam').innerText = "Vue: CABINE";
+                    document.getElementById('vehicle-mode').innerText = "PORTE-CHAR";
+                    document.getElementById('mission-text').innerText = "2. Conduisez à travers la ville et livrez le convoi dans la zone verte au Nord !";
+                    showWarning("Pelleteuse arrimée ! Bienvenue dans la cabine du poids lourd.");
                 }
             } else {
-                const maxSteer = 0.55;
+                const maxSteer = 0.52;
                 if (input.left) sim.steerAngle = Math.min(maxSteer, sim.steerAngle + 1.4 * dt);
                 else if (input.right) sim.steerAngle = Math.max(-maxSteer, sim.steerAngle - 1.4 * dt);
                 else if (Math.abs(sim.speed) > 0.2) sim.steerAngle *= 0.92;
@@ -462,7 +639,7 @@
                     if (input.gas) {
                         if (sim.speed < -0.2) sim.speed += 16 * dt;
                         else {
-                            sim.speed = Math.min(18, sim.speed + 7.5 * dt);
+                            sim.speed = Math.min(18, sim.speed + 7 * dt);
                             sim.gear = Math.min(6, Math.max(1, Math.ceil(sim.speed / 3)));
                         }
                     } else if (input.brake) {
@@ -480,7 +657,7 @@
                     if (sim.stalled) {
                         sim.rpm = 0;
                         sim.speed *= 0.92;
-                        showWarning("MOTEUR CALÉ ! Passez au point mort (N) avec embrayage pour redémarrer.");
+                        showWarning("MOTEUR CALÉ ! Passez au Point Mort (N) avec embrayage.");
                     } else if (sim.gear === 0 || input.clutch) {
                         const targetRpm = input.gas ? 2600 : 800;
                         sim.rpm += (targetRpm - sim.rpm) * 6 * dt;
@@ -496,7 +673,7 @@
 
                         if (input.gas && sim.rpm < 2800) {
                             const dir = sim.gear > 0 ? 1 : -1;
-                            const torque = (12 / Math.abs(ratio)) * 1.6;
+                            const torque = (11 / Math.abs(ratio)) * 1.6;
                             sim.speed += dir * torque * dt;
                         }
                     }
@@ -526,6 +703,31 @@
                 excavator.position.set(cargoX, 0.9, cargoZ);
                 excavator.rotation.y = sim.trailerAngle;
 
+                // Animation Volant, Levier de vitesses et Aiguilles du tableau de bord
+                steeringWheelGroup.rotation.z = -sim.steerAngle * 4.5;
+                
+                // Position physique du levier selon la grille en H
+                const gearPositions = {
+                    '-1': { x: -0.25, z: 0.25 },
+                    '0':  { x: 0,     z: 0 },
+                    '1':  { x: -0.25, z: -0.25 },
+                    '2':  { x: -0.25, z: 0.25 },
+                    '3':  { x: 0,     z: -0.25 },
+                    '4':  { x: 0,     z: 0.25 },
+                    '5':  { x: 0.25,  z: -0.25 },
+                    '6':  { x: 0.25,  z: 0.25 }
+                };
+                const gp = gearPositions[sim.gear] || { x: 0, z: 0 };
+                gearStickPivot.rotation.z += (gp.x - gearStickPivot.rotation.z) * 10 * dt;
+                gearStickPivot.rotation.x += (gp.z - gearStickPivot.rotation.x) * 10 * dt;
+
+                // Aiguilles compteurs
+                const speedRatio = Math.min(1, Math.abs(sim.speed) / 22);
+                const rpmRatio = Math.min(1, sim.rpm / 3000);
+                speedNeedle.rotation.z = 2.0 - speedRatio * 4.0;
+                rpmNeedle.rotation.z = 2.0 - rpmRatio * 4.0;
+
+                // UI Télémétrie
                 document.getElementById('speed').innerText = `${Math.abs(Math.round(sim.speed * 3.6))} km/h`;
                 document.getElementById('gear-display').innerText = sim.gear === 0 ? 'N' : (sim.gear === -1 ? 'R' : 'D' + sim.gear);
                 document.getElementById('rpm-val').innerText = `${Math.round(sim.rpm)} tr/m`;
@@ -539,9 +741,9 @@
                 document.getElementById('angle').innerText = `${jackknife}°`;
                 if (Math.abs(jackknife) > 65) showWarning("ATTENTION MISE EN PORTEFEUILLE !");
 
-                const distGoal = Math.hypot(cargoX - (-2), cargoZ - 85);
-                if (distGoal < 3.0 && Math.abs(sim.speed) < 0.15) {
-                    document.getElementById('modal-desc').innerText = "Vous avez chargé l'engin, géré le trafic et livré le porte-char à bon port !";
+                const distGoal = Math.hypot(cargoX - (-2), cargoZ - 230);
+                if (distGoal < 3.5 && Math.abs(sim.speed) < 0.15) {
+                    document.getElementById('modal-desc').innerText = "Traversée de la ville réussie ! Le chantier est opérationnel.";
                     document.getElementById('modal').style.display = 'block';
                 }
             }
@@ -556,17 +758,46 @@
             trailer.position.set(hX, 0, hZ);
             trailer.rotation.y = sim.trailerAngle;
 
+            // Trafic urbain
             trafficCars.forEach(car => {
                 const distToTruck = Math.hypot(car.mesh.position.x - sim.x, car.mesh.position.z - sim.z);
-                const forwardBlocked = distToTruck < 16 && ((car.dir > 0 && sim.z > car.mesh.position.z) || (car.dir < 0 && sim.z < car.mesh.position.z));
-
-                const targetSpd = forwardBlocked ? 0 : car.baseSpeed;
+                const blocked = distToTruck < 18;
+                const targetSpd = blocked ? 0 : car.baseSpeed;
                 car.speed += (targetSpd - car.speed) * 4 * dt;
-                car.mesh.position.z += car.dir * car.speed * dt;
 
-                if (car.dir > 0 && car.mesh.position.z > 180) car.mesh.position.z = -180;
-                if (car.dir < 0 && car.mesh.position.z < -180) car.mesh.position.z = 180;
+                if (car.dir === 'N') { car.mesh.position.z += car.speed * dt; if (car.mesh.position.z > 280) car.mesh.position.z = -280; }
+                if (car.dir === 'S') { car.mesh.position.z -= car.speed * dt; if (car.mesh.position.z < -280) car.mesh.position.z = 280; }
+                if (car.dir === 'E') { car.mesh.position.x += car.speed * dt; if (car.mesh.position.x > 220) car.mesh.position.x = -220; }
+                if (car.dir === 'W') { car.mesh.position.x -= car.speed * dt; if (car.mesh.position.x < -220) car.mesh.position.x = 220; }
             });
+        }
+
+        // --- GESTION CAMÉRAS & RENDU DES RÉTROVISEURS ---
+        function updateMirrors() {
+            if (sim.camMode !== 1 || sim.phase !== 'DRIVING') return;
+
+            // Position caméra rétroviseur gauche (regarde vers l'arrière le long de la remorque)
+            const sinA = Math.sin(sim.tractorAngle);
+            const cosA = Math.cos(sim.tractorAngle);
+
+            const mLX = sim.x - cosA * 1.45 + sinA * 2.5;
+            const mLZ = sim.z + sinA * 1.45 + cosA * 2.5;
+            mirrorCamL.position.set(mLX, 2.75, mLZ);
+            mirrorCamL.lookAt(mLX - sinA * 25 + cosA * 0.5, 1.5, mLZ - cosA * 25 - sinA * 0.5);
+
+            // Position caméra rétroviseur droit
+            const mRX = sim.x + cosA * 1.45 + sinA * 2.5;
+            const mRZ = sim.z - sinA * 1.45 + cosA * 2.5;
+            mirrorCamR.position.set(mRX, 2.75, mRZ);
+            mirrorCamR.lookAt(mRX - sinA * 25 - cosA * 0.5, 1.5, mRZ - cosA * 25 + sinA * 0.5);
+
+            renderer.setRenderTarget(mirrorRenderTargetL);
+            renderer.render(scene, mirrorCamL);
+
+            renderer.setRenderTarget(mirrorRenderTargetR);
+            renderer.render(scene, mirrorCamR);
+
+            renderer.setRenderTarget(null);
         }
 
         function updateCamera() {
@@ -577,20 +808,27 @@
             }
 
             if (sim.camMode === 0) {
-                const cx = sim.x - Math.sin(sim.tractorAngle) * 17;
-                const cz = sim.z - Math.cos(sim.tractorAngle) * 17;
-                camera.position.lerp(new THREE.Vector3(cx, 7.5, cz), 0.12);
+                // Vue externe poursuite
+                const cx = sim.x - Math.sin(sim.tractorAngle) * 18;
+                const cz = sim.z - Math.cos(sim.tractorAngle) * 18;
+                camera.position.lerp(new THREE.Vector3(cx, 8, cz), 0.12);
                 camera.lookAt(sim.x, 2, sim.z);
             } else if (sim.camMode === 1) {
-                const mx = sim.x - Math.cos(sim.tractorAngle) * 1.9 + Math.sin(sim.tractorAngle) * 1.5;
-                const mz = sim.z + Math.sin(sim.tractorAngle) * 1.9 + Math.cos(sim.tractorAngle) * 1.5;
-                camera.position.set(mx, 2.8, mz);
-                const lx = trailer.position.x - Math.sin(sim.trailerAngle) * 12;
-                const lz = trailer.position.z - Math.cos(sim.trailerAngle) * 12;
-                camera.lookAt(lx, 1.0, lz);
+                // VUE INTÉRIEURE CABINE (Siège conducteur à gauche X = -0.6)
+                const sinA = Math.sin(sim.tractorAngle);
+                const cosA = Math.cos(sim.tractorAngle);
+                const driverX = sim.x - cosA * 0.58 + sinA * 1.65;
+                const driverZ = sim.z + sinA * 0.58 + cosA * 1.65;
+                camera.position.set(driverX, 2.75, driverZ);
+                
+                // Regarde droit devant à travers le pare-brise + légère vue sur le tableau de bord et rétros
+                const lookX = driverX + sinA * 20;
+                const lookZ = driverZ + cosA * 20;
+                camera.lookAt(lookX, 2.35, lookZ);
             } else {
-                camera.position.set(sim.x, 30, sim.z - 6);
-                camera.lookAt(sim.x, 0, sim.z);
+                // Vue aérienne drone
+                camera.position.set(sim.x, 45, sim.z - 10);
+                camera.lookAt(sim.x, 0, sim.z + 15);
             }
         }
 
@@ -599,6 +837,7 @@
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.1);
             update(dt);
+            updateMirrors();
             updateCamera();
             renderer.render(scene, camera);
         }
@@ -616,8 +855,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log("Service Worker enregistré avec succès !"))
-                    .catch((err) => console.log("Erreur d'enregistrement du Service Worker :", err));
+                    .then(() => console.log("Service Worker enregistré !"))
+                    .catch((err) => console.log("Erreur SW :", err));
             });
         }
     </script>
