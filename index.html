@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>TruckConduite 3D - Ultimate Simulator</title>
+    <title>TruckConduite 3D - Ultimate Simulator Pro</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #030712; touch-action: none; }
@@ -14,9 +14,9 @@
             display: flex; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 5;
         }
         .panel {
-            background: rgba(10, 14, 26, 0.92); color: #f8fafc;
+            background: rgba(10, 14, 26, 0.94); color: #f8fafc;
             padding: 8px 12px; border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             pointer-events: auto; backdrop-filter: blur(12px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.6);
         }
@@ -101,7 +101,7 @@
                 1. Baissez les rampes (B) et chargez le tombereau.
             </p>
             <div class="stat-row"><span>Attelage :</span> <span class="val" id="angle">0°</span></div>
-            <div class="stat-row"><span>Distance :</span> <span class="val" id="dist-goal">295 m</span></div>
+            <div class="stat-row"><span>Distance :</span> <span class="val" id="dist-goal">350 m</span></div>
             <button class="btn-sm" onclick="resetGame()" style="width:100%; margin-top:4px;">Recommencer (R)</button>
         </div>
     </div>
@@ -149,13 +149,9 @@
             engineOsc.type = 'sawtooth';
             engineOsc.frequency.value = 38;
             const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = 140;
-            engineGain = audioCtx.createGain();
-            engineGain.gain.value = 0.08;
-            engineOsc.connect(filter);
-            filter.connect(engineGain);
-            engineGain.connect(audioCtx.destination);
+            filter.type = 'lowpass'; filter.frequency.value = 140;
+            engineGain = audioCtx.createGain(); engineGain.gain.value = 0.08;
+            engineOsc.connect(filter); filter.connect(engineGain); engineGain.connect(audioCtx.destination);
             engineOsc.start();
             soundEnabled = true;
             document.getElementById('btn-sound').classList.add('active');
@@ -181,11 +177,10 @@
             osc1.connect(gain); osc2.connect(gain);
             gain.connect(audioCtx.destination);
             osc1.start(); osc2.start();
-            osc1.stop(audioCtx.currentTime + 0.65);
-            osc2.stop(audioCtx.currentTime + 0.65);
+            osc1.stop(audioCtx.currentTime + 0.65); osc2.stop(audioCtx.currentTime + 0.65);
         }
 
-        // --- TEXTURES HAUTE DÉFINITION ---
+        // --- TEXTURES & GRAPHISMES PRO ---
         function createAsphaltTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 512; canvas.height = 512;
@@ -197,39 +192,34 @@
                 ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
             }
             ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(16, 0, 10, 512);
-            ctx.fillRect(486, 0, 10, 512);
+            ctx.fillRect(16, 0, 10, 512); ctx.fillRect(486, 0, 10, 512);
             ctx.fillStyle = '#facc15';
-            ctx.fillRect(252, 30, 8, 200);
-            ctx.fillRect(252, 280, 8, 200);
+            ctx.fillRect(252, 30, 8, 200); ctx.fillRect(252, 280, 8, 200);
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
             return tex;
         }
 
-        function createGPSDashboardTexture() {
+        function createBuildingTexture() {
             const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 256;
+            canvas.width = 256; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#050b14'; ctx.fillRect(0, 0, 512, 256);
-            ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 6;
-            ctx.strokeRect(8, 8, 496, 240);
-            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 26px sans-serif';
-            ctx.fillText('NAVIGATION GPS PRO', 30, 48);
-            ctx.fillStyle = '#10b981'; ctx.font = '20px sans-serif';
-            ctx.fillText('ROUTE N1 - DIRECTION NORD', 30, 95);
-            ctx.fillStyle = '#f59e0b'; ctx.font = '18px sans-serif';
-            ctx.fillText('MODE CONVOI EXCEPTIONNEL ACTIF', 30, 140);
-            const tex = new THREE.CanvasTexture(canvas);
-            return tex;
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 256, 512);
+            for (let y = 16; y < 490; y += 32) {
+                for (let x = 16; x < 230; x += 32) {
+                    ctx.fillStyle = Math.random() > 0.3 ? '#38bdf8' : '#0f172a';
+                    ctx.fillRect(x, y, 20, 20);
+                }
+            }
+            return new THREE.CanvasTexture(canvas);
         }
 
-        // --- SCÈNE 3D & LUMIÈRE PHOTORÉALISTE ---
+        // --- SCÈNE 3D & ÉCLAIRAGE ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x38bdf8);
         scene.fog = new THREE.FogExp2(0x38bdf8, 0.0018);
 
-        const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 1200);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -240,8 +230,7 @@
         const sun = new THREE.DirectionalLight(0xfffbeb, 1.1);
         sun.position.set(160, 220, 120);
         sun.castShadow = true;
-        sun.shadow.mapSize.width = 2048;
-        sun.shadow.mapSize.height = 2048;
+        sun.shadow.mapSize.width = 2048; sun.shadow.mapSize.height = 2048;
         const d = 180;
         sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
         sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
@@ -249,36 +238,32 @@
 
         // Sol paysager
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1500, 1500),
+            new THREE.PlaneGeometry(1600, 1600),
             new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.9 })
         );
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
+        ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
         scene.add(ground);
 
-        // Route goudronnée
+        // Route goudronnée principale
         const roadTex = createAsphaltTexture();
-        roadTex.repeat.set(1, 50);
+        roadTex.repeat.set(1, 60);
         const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(18, 1000),
+            new THREE.PlaneGeometry(18, 1200),
             new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.75 })
         );
-        road.rotation.x = -Math.PI / 2;
-        road.position.set(14, 0.05, 0);
-        road.receiveShadow = true;
+        road.rotation.x = -Math.PI / 2; road.position.set(14, 0.05, 0); road.receiveShadow = true;
         scene.add(road);
 
-        // Arbres réalistes le long de la route
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.8 });
-        for (let z = -450; z <= 450; z += 35) {
-            [-16, 44].forEach(xOff => {
-                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 5, 8), trunkMat);
-                trunk.position.set(xOff, 2.5, z);
-                const leaves = new THREE.Mesh(new THREE.ConeGeometry(3.2, 7, 8), leavesMat);
-                leaves.position.set(xOff, 6, z);
-                scene.add(trunk, leaves);
-            });
+        // --- BÂTIMENTS DE LA VILLE & MAP ---
+        const bldgMat = new THREE.MeshStandardMaterial({ map: createBuildingTexture(), roughness: 0.4 });
+        function addBuilding(x, z, w, d, h) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bldgMat);
+            mesh.position.set(x, h / 2, z); mesh.castShadow = true; mesh.receiveShadow = true;
+            scene.add(mesh);
+        }
+        for (let z = -400; z <= 400; z += 60) {
+            addBuilding(38, z, 30, 35, 55);
+            addBuilding(-32, z, 28, 30, 48);
         }
 
         // Zone de départ & Arrivée
@@ -290,10 +275,29 @@
             new THREE.PlaneGeometry(7, 26),
             new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.65 })
         );
-        deliveryZone.rotation.x = -Math.PI / 2; deliveryZone.position.set(-8, 0.06, 320);
+        deliveryZone.rotation.x = -Math.PI / 2; deliveryZone.position.set(-8, 0.06, 350);
         scene.add(deliveryZone);
 
-        // --- MATÉRIAUX CAMION HAUT DE GAMME ---
+        // --- TRAFIC ROUTIER INTÉLLIGENT ---
+        const trafficCars = [];
+        function createTrafficCar(x, z, dir, color) {
+            const car = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.15, 4.4), new THREE.MeshStandardMaterial({ color, roughness: 0.3 }));
+            body.position.y = 0.78; body.castShadow = true;
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.68, 2.2), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+            roof.position.set(0, 1.62, -0.2);
+            car.add(body, roof);
+            car.position.set(x, 0.05, z);
+            car.rotation.y = dir === 'N' ? 0 : Math.PI;
+            scene.add(car);
+            trafficCars.push({ mesh: car, dir, baseSpeed: 11 + Math.random() * 5, speed: 12 });
+        }
+        createTrafficCar(18.0, -200, 'N', 0xdc2626);
+        createTrafficCar(18.0, 100, 'N', 0x2563eb);
+        createTrafficCar(10.0, 250, 'S', 0xf8fafc);
+        createTrafficCar(10.0, -50, 'S', 0x059669);
+
+        // --- MATÉRIAUX CAMION & CONVOI EXCEPTIONNEL ULTRA-RÉALISTES ---
         const matChassis = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.5 });
         const matCabWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.2 });
         const matChrome = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.08, metalness: 0.98 });
@@ -315,7 +319,7 @@
             return group;
         }
 
-        // --- TRACTEUR ROUTIER BLANC (SCULPTÉ & DÉTAILLÉ) ---
+        // --- TRACTEUR ROUTIER BLANC ---
         const tractor = new THREE.Group();
         scene.add(tractor);
 
@@ -335,13 +339,9 @@
         const cabFrontLower = new THREE.Mesh(new THREE.BoxGeometry(2.48, 1.05, 0.22), matCabWhite);
         cabFrontLower.position.set(0, 0.52, 1.1);
 
-        // Calandre sculptée multi-niveaux style Mercedes Actros / Scania
         const grille1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.75, 0.08), matChrome);
         grille1.position.set(0, 0.45, 1.22);
-        const grilleBar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 0.12), matChassis);
-        grilleBar.position.set(0, 0.45, 1.25);
         
-        // Bandeau Convoi Exceptionnel
         const convoisSign = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.32, 0.08), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
         convoisSign.position.set(0, 1.25, 1.22);
         cabGroup.add(convoisSign);
@@ -350,9 +350,8 @@
         const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.08), headlightMat);
         hlL.position.set(-0.98, 0.22, 1.22);
         const hlR = hlL.clone(); hlR.position.x = 0.98;
-        cabGroup.add(grille1, grilleBar, hlL, hlR);
+        cabGroup.add(grille1, hlL, hlR);
 
-        // Gyrophares orange sur le toit
         const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff9800 });
         const beaconL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.18, 12), beaconMat);
         beaconL.position.set(-0.85, 2.64, 0.6);
@@ -374,19 +373,31 @@
 
         cabGroup.add(cabFloor, cabRoof, cabBack, cabFrontLower, pillarL, pillarR, doorL, doorR, windshield);
 
-        // --- COCKPIT PRO ---
+        // --- CAMÉRA INTÉRIEURE (AVEC ÉCRANS DE RÉTROVISION LATÉRAUX DE LA 1ère CAPTURE) ---
+        const mirrorRenderTargetL = new THREE.WebGLRenderTarget(256, 512);
+        const mirrorRenderTargetR = new THREE.WebGLRenderTarget(256, 512);
+        const mirrorCamL = new THREE.PerspectiveCamera(45, 0.5, 0.5, 300);
+        const mirrorCamR = new THREE.PerspectiveCamera(45, 0.5, 0.5, 300);
+
+        // Écrans verticaux sur les montants de cabine (comme sur la photo de référence)
+        const screenMatL = new THREE.MeshBasicMaterial({ map: mirrorRenderTargetL.texture });
+        const screenMatR = new THREE.MeshBasicMaterial({ map: mirrorRenderTargetR.texture });
+
+        const mirrorScreenL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatL);
+        mirrorScreenL.position.set(-1.18, 1.75, 0.6);
+        
+        const mirrorScreenR1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatR);
+        mirrorScreenR1.position.set(1.18, 1.75, 0.6);
+        const mirrorScreenR2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.75, 0.45), screenMatR);
+        mirrorScreenR2.position.set(1.18, 2.55, 0.6);
+        
+        cabGroup.add(mirrorScreenL, mirrorScreenR1, mirrorScreenR2);
+
         const interior = new THREE.Group();
         cabGroup.add(interior);
         const dashboard = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.55, 0.6), matDash);
         dashboard.position.set(0, 0.95, 0.8);
         interior.add(dashboard);
-
-        const gpsScreen = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.5, 0.3),
-            new THREE.MeshBasicMaterial({ map: createGPSDashboardTexture() })
-        );
-        gpsScreen.position.set(0.05, 1.22, 0.54); gpsScreen.rotation.set(0.25, Math.PI, 0);
-        interior.add(gpsScreen);
 
         const steeringWheelGroup = new THREE.Group();
         steeringWheelGroup.position.set(-0.55, 1.12, 0.35); steeringWheelGroup.rotation.x = -0.62;
@@ -402,7 +413,7 @@
         tractor.add(makeWheel(-1.25, 0.55, -1.2), makeWheel(1.25, 0.55, -1.2));
         tractor.add(makeWheel(-1.25, 0.55, -2.4), makeWheel(1.25, 0.55, -2.4));
 
-        // --- REMORQUE PORTE-CHAR ---
+        // --- REMORQUE PORTE-CHAR & TOMBREAU ---
         const trailer = new THREE.Group();
         scene.add(trailer);
         const neck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.42, 3.2), matCabWhite);
@@ -427,10 +438,8 @@
         rampR.position.set(0.85, 0, -1.3);
         rampPivot.add(rampL, rampR);
 
-        // --- TOMBREAU ARTICULÉ (CHARGEMENT) ---
         const tombereau = new THREE.Group();
         scene.add(tombereau);
-
         const trChassis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 3.2), matChassis);
         trChassis.position.y = 0.3;
         const trCab = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.3, 1.5), matTombereau);
@@ -439,26 +448,15 @@
         trGlass.position.set(0, 1.45, 0.9);
         const trBenne = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.2, 3.2), matTombereau);
         trBenne.position.set(0, 1.5, -1.1); trBenne.rotation.x = -0.1; trBenne.castShadow = true;
-
         tombereau.add(trChassis, trCab, trGlass, trBenne);
 
         // --- ÉTAT DU SIMULATEUR ---
         let sim = {
-            phase: 'LOADING',
-            isManual: true,
-            camMode: 0,
-            rampsDown: false,
-            rampAngle: -1.35,
+            phase: 'LOADING', isManual: true, camMode: 0,
+            rampsDown: false, rampAngle: -1.35,
             exX: -8, exZ: -74, exY: 0, exAngle: 0, exSpeed: 0,
-            x: -8, z: -52,
-            tractorAngle: 0,
-            trailerAngle: 0,
-            speed: 0,
-            steerAngle: 0,
-            gear: 0,
-            rpm: 800,
-            stalled: false,
-            time: 0
+            x: -8, z: -52, tractorAngle: 0, trailerAngle: 0,
+            speed: 0, steerAngle: 0, gear: 0, rpm: 800, stalled: false, time: 0
         };
 
         const gearRatios = { '-1': -3.8, '0': 0, '1': 4.2, '2': 2.8, '3': 2.0, '4': 1.45, '5': 1.1, '6': 0.85 };
@@ -475,11 +473,8 @@
             el.addEventListener('mouseup', release);
             el.addEventListener('mouseleave', release);
         }
-        bindTouch('btn-left', 'left');
-        bindTouch('btn-right', 'right');
-        bindTouch('btn-gas', 'gas');
-        bindTouch('btn-brake', 'brake');
-        bindTouch('btn-clutch', 'clutch');
+        bindTouch('btn-left', 'left'); bindTouch('btn-right', 'right');
+        bindTouch('btn-gas', 'gas'); bindTouch('btn-brake', 'brake'); bindTouch('btn-clutch', 'clutch');
 
         window.addEventListener('keydown', e => {
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') input.left = true;
@@ -652,7 +647,7 @@
                 const jackknife = Math.round(Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle)) * 180 / Math.PI);
                 document.getElementById('angle').innerText = `${jackknife}°`;
 
-                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - 320));
+                const distGoal = Math.round(Math.hypot(cargoX - (-8), cargoZ - 350));
                 document.getElementById('dist-goal').innerText = `${distGoal} m`;
 
                 if (distGoal < 4.0 && Math.abs(sim.speed) < 0.15) {
@@ -668,6 +663,28 @@
             const hX = sim.x + Math.sin(sim.tractorAngle) * hitchOffset;
             const hZ = sim.z + Math.cos(sim.tractorAngle) * hitchOffset;
             trailer.position.set(hX, 0, hZ); trailer.rotation.y = sim.trailerAngle;
+
+            // Mise à jour du trafic routier
+            trafficCars.forEach(car => {
+                if (car.dir === 'N') { car.mesh.position.z += car.speed * dt; if (car.mesh.position.z > 400) car.mesh.position.z = -400; }
+                if (car.dir === 'S') { car.mesh.position.z -= car.speed * dt; if (car.mesh.position.z < -400) car.mesh.position.z = 400; }
+            });
+        }
+
+        // --- RENDU DES ÉCRANS DE RÉTROVISION LATÉRAUX ---
+        function updateMirrors() {
+            if (sim.camMode !== 1 || sim.phase !== 'DRIVING') return;
+            const sinA = Math.sin(sim.tractorAngle); const cosA = Math.cos(sim.tractorAngle);
+
+            mirrorCamL.position.set(sim.x - cosA * 1.6 + sinA * 2.5, 2.8, sim.z + sinA * 1.6 + cosA * 2.5);
+            mirrorCamL.lookAt(sim.x - sinA * 30, 1.2, sim.z - cosA * 30);
+
+            mirrorCamR.position.set(sim.x + cosA * 1.6 + sinA * 2.5, 2.8, sim.z - sinA * 1.6 + cosA * 2.5);
+            mirrorCamR.lookAt(sim.x - sinA * 30, 1.2, sim.z - cosA * 30);
+
+            renderer.setRenderTarget(mirrorRenderTargetL); renderer.render(scene, mirrorCamL);
+            renderer.setRenderTarget(mirrorRenderTargetR); renderer.render(scene, mirrorCamR);
+            renderer.setRenderTarget(null);
         }
 
         function updateCamera() {
@@ -683,10 +700,8 @@
                 camera.lookAt(sim.x, 2, sim.z);
             } else if (sim.camMode === 1) {
                 const sinA = Math.sin(sim.tractorAngle); const cosA = Math.cos(sim.tractorAngle);
-                const driverX = sim.x - cosA * 0.48 + sinA * 1.55;
-                const driverZ = sim.z + sinA * 0.48 + cosA * 1.55;
-                camera.position.set(driverX, 2.88, driverZ);
-                camera.lookAt(driverX + sinA * 20, 2.15, driverZ + cosA * 20);
+                camera.position.set(sim.x - cosA * 0.48 + sinA * 1.55, 2.88, sim.z + sinA * 0.48 + cosA * 1.55);
+                camera.lookAt(sim.x + sinA * 25, 2.15, sim.z + cosA * 25);
             } else {
                 camera.position.set(sim.x, 48, sim.z - 12);
                 camera.lookAt(sim.x, 0, sim.z + 15);
@@ -698,6 +713,7 @@
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.1);
             update(dt);
+            updateMirrors();
             updateCamera();
             renderer.render(scene, camera);
         }
