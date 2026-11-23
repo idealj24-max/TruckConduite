@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
     <title>TruckConduite 3D - Simulateur Poids Lourd & Porte-Char</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #0f172a; touch-action: none; }
         
-        /* Tableau de bord supérieur */
         #hud-top {
             position: absolute; top: 10px; left: 10px; right: 10px;
             display: flex; justify-content: space-between; gap: 10px; pointer-events: none;
@@ -23,11 +23,9 @@
         .stat-row { display: flex; justify-content: space-between; gap: 15px; font-size: 13px; margin: 3px 0; }
         .val { font-weight: bold; color: #38bdf8; }
         
-        /* Barre RPM */
         #rpm-bar-bg { width: 100%; height: 6px; background: #334155; border-radius: 3px; margin-top: 4px; overflow: hidden; }
         #rpm-bar { width: 20%; height: 100%; background: #10b981; transition: width 0.05s, background 0.1s; }
 
-        /* Boutons d'options */
         .btn-sm {
             background: #334155; color: #fff; border: 1px solid #475569;
             padding: 5px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;
@@ -35,7 +33,6 @@
         }
         .btn-sm.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
-        /* Alertes */
         #warning-banner {
             position: absolute; top: 130px; left: 50%; transform: translateX(-50%);
             background: rgba(239, 68, 68, 0.92); color: white; padding: 8px 18px;
@@ -52,7 +49,6 @@
             background: #10b981; color: #fff; font-weight: bold; font-size: 15px; cursor: pointer;
         }
 
-        /* Contrôles Tactiles (Mobile & Tablette) */
         #touch-controls {
             position: absolute; bottom: 15px; left: 15px; right: 15px;
             display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none;
@@ -62,7 +58,6 @@
             background: rgba(30, 41, 59, 0.85); color: white; border: 2px solid rgba(255,255,255,0.25);
             border-radius: 12px; font-weight: bold; font-size: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            active: scale(0.95);
         }
         .t-btn:active, .t-btn.pressed { background: rgba(245, 158, 11, 0.85); color: #000; border-color: #fff; }
         .steer-btn { width: 65px; height: 65px; font-size: 24px; }
@@ -78,7 +73,6 @@
 <body>
 
     <div id="hud-top">
-        <!-- Télémétrie -->
         <div class="panel" style="min-width: 175px;">
             <h1>🚛 TruckConduite</h1>
             <div class="stat-row"><span>Mode :</span> <span class="val" id="vehicle-mode">ENGIN (Pelleteuse)</span></div>
@@ -93,7 +87,6 @@
             </div>
         </div>
 
-        <!-- Mission -->
         <div class="panel" style="max-width: 240px; border-left: 4px solid #f59e0b;">
             <strong style="color:#f59e0b; font-size: 13px;">🎯 ÉTAPE EN COURS</strong>
             <p id="mission-text" style="font-size: 12px; margin: 5px 0; line-height: 1.35;">
@@ -112,7 +105,6 @@
         <button onclick="resetGame()">Rejouer le parcours</button>
     </div>
 
-    <!-- Contrôles Tactiles -->
     <div id="touch-controls">
         <div class="control-group">
             <div class="t-btn steer-btn" id="btn-left">◀</div>
@@ -133,7 +125,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- INITIALISATION SCÈNE 3D ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x7dd3fc);
         scene.fog = new THREE.Fog(0x7dd3fc, 50, 260);
@@ -144,7 +135,6 @@
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // Éclairage
         scene.add(new THREE.AmbientLight(0xffffff, 0.65));
         const sun = new THREE.DirectionalLight(0xffffff, 0.85);
         sun.position.set(60, 100, 40);
@@ -153,16 +143,14 @@
         sun.shadow.mapSize.height = 2048;
         scene.add(sun);
 
-        // --- ROUTE ET ENVIRONNEMENT ---
         const ground = new THREE.Mesh(
             new THREE.PlaneGeometry(500, 500),
-            new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.9 }) // Sol désert/chantier
+            new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.9 })
         );
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        // Route asphaltée principale (2 voies)
         const road = new THREE.Mesh(
             new THREE.PlaneGeometry(14, 450),
             new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 })
@@ -172,7 +160,6 @@
         road.receiveShadow = true;
         scene.add(road);
 
-        // Ligne centrale discontinue
         for (let z = -200; z <= 200; z += 10) {
             const line = new THREE.Mesh(
                 new THREE.PlaneGeometry(0.25, 4.5),
@@ -183,7 +170,6 @@
             scene.add(line);
         }
 
-        // Zone de départ (Aire de chargement)
         const yard = new THREE.Mesh(
             new THREE.PlaneGeometry(18, 45),
             new THREE.MeshStandardMaterial({ color: 0x334155 })
@@ -192,7 +178,6 @@
         yard.position.set(-2, 0.02, -30);
         scene.add(yard);
 
-        // Zone de livraison finale (Chantier Nord)
         const deliveryZone = new THREE.Mesh(
             new THREE.PlaneGeometry(5, 19),
             new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.45 })
@@ -201,7 +186,6 @@
         deliveryZone.position.set(-2, 0.04, 85);
         scene.add(deliveryZone);
 
-        // --- MATÉRIAUX ---
         const matChassis = new THREE.MeshStandardMaterial({ color: 0x0f172a });
         const matCab = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 });
         const matGlass = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1 });
@@ -218,7 +202,6 @@
             return w;
         }
 
-        // --- TRACTEUR POIDS LOURD ---
         const tractor = new THREE.Group();
         scene.add(tractor);
 
@@ -242,7 +225,6 @@
         tractor.add(makeWheel(-1.25, 0.55, -1.2), makeWheel(1.25, 0.55, -1.2));
         tractor.add(makeWheel(-1.25, 0.55, -2.4), makeWheel(1.25, 0.55, -2.4));
 
-        // --- REMORQUE PORTE-CHAR ---
         const trailer = new THREE.Group();
         scene.add(trailer);
 
@@ -261,7 +243,6 @@
             trailer.add(makeWheel(1.38, 0.5, z, 0.5));
         });
 
-        // Rampes articulées à l'arrière du porte-char
         const rampPivot = new THREE.Group();
         rampPivot.position.set(0, 0.75, -12.2);
         trailer.add(rampPivot);
@@ -272,7 +253,6 @@
         rampR.position.set(0.85, 0, -1.3);
         rampPivot.add(rampL, rampR);
 
-        // --- ENGIN DE CHANTIER (PELLETEUSE À CHARGER) ---
         const excavator = new THREE.Group();
         scene.add(excavator);
 
@@ -288,7 +268,6 @@
         exArm.rotation.x = 0.35;
         excavator.add(tracks, exBody, exCab, exArm);
 
-        // --- TRAFIC ROUTIER (IA) ---
         const trafficCars = [];
         function createTrafficCar(laneX, startZ, dir, color) {
             const car = new THREE.Group();
@@ -309,38 +288,33 @@
         createTrafficCar(10.5, 120, -1, 0xf8fafc);
         createTrafficCar(10.5, 10, -1, 0x10b981);
 
-        // --- ÉTAT DU SIMULATEUR ---
         let sim = {
-            phase: 'LOADING', // 'LOADING' (conduite pelleteuse) ou 'DRIVING' (conduite camion)
+            phase: 'LOADING',
             isManual: true,
             camMode: 0,
             rampsDown: false,
-            rampAngle: -1.35, // Relevées au départ
-            
-            // État Pelleteuse
+            rampAngle: -1.35,
             exX: -2, exZ: -48, exY: 0, exAngle: 0, exSpeed: 0,
-            
-            // État Camion
             x: -2, z: -26,
             tractorAngle: 0,
             trailerAngle: 0,
             speed: 0,
             steerAngle: 0,
-            gear: 0, // -1: R, 0: N, 1..6: Rapports avant
+            gear: 0,
             rpm: 800,
             stalled: false
         };
 
         const gearRatios = { '-1': -3.8, '0': 0, '1': 4.2, '2': 2.8, '3': 2.0, '4': 1.45, '5': 1.1, '6': 0.85 };
 
-        // --- CONTRÔLES CLAVIER & TACTILES ---
         const input = { left: false, right: false, gas: false, brake: false, clutch: false };
 
         function bindTouch(id, key) {
             const el = document.getElementById(id);
+            if (!el) return;
             const press = (e) => { e.preventDefault(); input[key] = true; el.classList.add('pressed'); };
             const release = (e) => { e.preventDefault(); input[key] = false; el.classList.remove('pressed'); };
-            el.addEventListener('touchstart', press);
+            el.addEventListener('touchstart', press, {passive: false});
             el.addEventListener('touchend', release);
             el.addEventListener('mousedown', press);
             el.addEventListener('mouseup', release);
@@ -426,18 +400,15 @@
             document.getElementById('mission-text').innerText = "1. Abaissez les rampes (B) et montez la pelleteuse sur le porte-char.";
         }
 
-        // --- BOUCLE PHYSIQUE ---
         const wheelBase = 4.2;
         const hitchOffset = -1.5;
         const trailerLength = 9.8;
 
         function update(dt) {
-            // Animation des rampes
             const targetRamp = sim.rampsDown ? 0.28 : -1.35;
             sim.rampAngle += (targetRamp - sim.rampAngle) * 5 * dt;
             rampPivot.rotation.x = sim.rampAngle;
 
-            // --- PHASE 1 : CHARGEMENT DE LA PELLETEUSE ---
             if (sim.phase === 'LOADING') {
                 if (input.gas) sim.exSpeed = 3.2;
                 else if (input.brake) sim.exSpeed = -2.5;
@@ -449,7 +420,6 @@
                 sim.exX += Math.sin(sim.exAngle) * sim.exSpeed * dt;
                 sim.exZ += Math.cos(sim.exAngle) * sim.exSpeed * dt;
 
-                // Gestion hauteur sur la rampe et le plateau (Z entre -41.5 et -33)
                 const hitchZ = sim.z + hitchOffset;
                 const rampStartZ = hitchZ - 14.8;
                 const bedStartZ = hitchZ - 12.2;
@@ -475,26 +445,20 @@
                 document.getElementById('speed').innerText = `${Math.abs(Math.round(sim.exSpeed * 3.6))} km/h`;
                 document.getElementById('gear-display').innerText = "CHENILLES";
 
-                // Vérifier si la pelleteuse est bien centrée sur le plateau
                 if (sim.exY >= 0.88 && sim.exZ > hitchZ - 9.5 && sim.exZ < hitchZ - 5.5 && Math.abs(sim.exSpeed) < 0.2) {
                     sim.phase = 'DRIVING';
-                    sim.rampsDown = false; // Relève automatiquement les rampes
+                    sim.rampsDown = false;
                     document.getElementById('vehicle-mode').innerText = "CAMION PORTE-CHAR";
                     document.getElementById('mission-text').innerText = "2. Rejoignez la route à droite et garez le porte-char dans la zone verte au Nord !";
                     showWarning("Engin arrimé ! Rampes relevées. Démarrez le poids lourd !");
                 }
-            } 
-            // --- PHASE 2 : CONDUITE DU POIDS LOURD ---
-            else {
-                // Direction
+            } else {
                 const maxSteer = 0.55;
                 if (input.left) sim.steerAngle = Math.min(maxSteer, sim.steerAngle + 1.4 * dt);
                 else if (input.right) sim.steerAngle = Math.max(-maxSteer, sim.steerAngle - 1.4 * dt);
                 else if (Math.abs(sim.speed) > 0.2) sim.steerAngle *= 0.92;
 
-                // Transmission & Moteur
                 if (!sim.isManual) {
-                    // BOÎTE AUTOMATIQUE
                     if (input.gas) {
                         if (sim.speed < -0.2) sim.speed += 16 * dt;
                         else {
@@ -513,23 +477,19 @@
                     }
                     sim.rpm = 800 + (Math.abs(sim.speed) % 3.2) * 550;
                 } else {
-                    // BOÎTE MANUELLE AVEC EMBRAYAGE
                     if (sim.stalled) {
                         sim.rpm = 0;
                         sim.speed *= 0.92;
                         showWarning("MOTEUR CALÉ ! Passez au point mort (N) avec embrayage pour redémarrer.");
                     } else if (sim.gear === 0 || input.clutch) {
-                        // Point mort ou embrayage enfoncé : le moteur monte dans les tours librement
                         const targetRpm = input.gas ? 2600 : 800;
                         sim.rpm += (targetRpm - sim.rpm) * 6 * dt;
                         sim.speed *= 0.985;
                     } else {
-                        // Rapport engagé
                         const ratio = gearRatios[sim.gear];
                         const wheelRpm = Math.abs(sim.speed) * Math.abs(ratio) * 110;
                         sim.rpm = Math.max(600, wheelRpm);
 
-                        // Calage si vitesse trop basse sur un rapport élevé sans gaz
                         if (sim.rpm < 720 && Math.abs(sim.gear) > 1 && !input.gas) {
                             sim.stalled = true;
                         }
@@ -549,7 +509,6 @@
                     }
                 }
 
-                // Cinématique Tracteur
                 if (Math.abs(sim.speed) > 0.02) {
                     const angularVel = (sim.speed / wheelBase) * Math.tan(sim.steerAngle);
                     sim.tractorAngle += angularVel * dt;
@@ -557,19 +516,16 @@
                     sim.z += Math.cos(sim.tractorAngle) * sim.speed * dt;
                 }
 
-                // Sellette et Remorque
                 const hitchX = sim.x + Math.sin(sim.tractorAngle) * hitchOffset;
                 const hitchZ = sim.z + Math.cos(sim.tractorAngle) * hitchOffset;
                 const diffAngle = sim.tractorAngle - sim.trailerAngle;
                 sim.trailerAngle += ((sim.speed / trailerLength) * Math.sin(diffAngle)) * dt;
 
-                // Maintenir la pelleteuse arrimée sur le plateau
                 const cargoX = hitchX - Math.sin(sim.trailerAngle) * 7.2;
                 const cargoZ = hitchZ - Math.cos(sim.trailerAngle) * 7.2;
                 excavator.position.set(cargoX, 0.9, cargoZ);
                 excavator.rotation.y = sim.trailerAngle;
 
-                // UI Télémétrie
                 document.getElementById('speed').innerText = `${Math.abs(Math.round(sim.speed * 3.6))} km/h`;
                 document.getElementById('gear-display').innerText = sim.gear === 0 ? 'N' : (sim.gear === -1 ? 'R' : 'D' + sim.gear);
                 document.getElementById('rpm-val').innerText = `${Math.round(sim.rpm)} tr/m`;
@@ -583,7 +539,6 @@
                 document.getElementById('angle').innerText = `${jackknife}°`;
                 if (Math.abs(jackknife) > 65) showWarning("ATTENTION MISE EN PORTEFEUILLE !");
 
-                // Vérifier arrivée zone de livraison (Z = 85, X = -2)
                 const distGoal = Math.hypot(cargoX - (-2), cargoZ - 85);
                 if (distGoal < 3.0 && Math.abs(sim.speed) < 0.15) {
                     document.getElementById('modal-desc').innerText = "Vous avez chargé l'engin, géré le trafic et livré le porte-char à bon port !";
@@ -591,7 +546,6 @@
                 }
             }
 
-            // Mise à jour 3D Tracteur & Remorque
             tractor.position.set(sim.x, 0, sim.z);
             tractor.rotation.y = sim.tractorAngle;
             wheelFL.rotation.y = sim.steerAngle;
@@ -602,9 +556,7 @@
             trailer.position.set(hX, 0, hZ);
             trailer.rotation.y = sim.trailerAngle;
 
-            // --- MISE À JOUR TRAFIC ROUTIER ---
             trafficCars.forEach(car => {
-                // Détecter si le camion bloque la voie devant la voiture
                 const distToTruck = Math.hypot(car.mesh.position.x - sim.x, car.mesh.position.z - sim.z);
                 const forwardBlocked = distToTruck < 16 && ((car.dir > 0 && sim.z > car.mesh.position.z) || (car.dir < 0 && sim.z < car.mesh.position.z));
 
@@ -612,13 +564,11 @@
                 car.speed += (targetSpd - car.speed) * 4 * dt;
                 car.mesh.position.z += car.dir * car.speed * dt;
 
-                // Boucle infinie du trafic
                 if (car.dir > 0 && car.mesh.position.z > 180) car.mesh.position.z = -180;
                 if (car.dir < 0 && car.mesh.position.z < -180) car.mesh.position.z = 180;
             });
         }
 
-        // --- CAMÉRAS ---
         function updateCamera() {
             if (sim.phase === 'LOADING') {
                 camera.position.lerp(new THREE.Vector3(sim.exX - 7, 5.5, sim.exZ - 8), 0.1);
@@ -627,13 +577,11 @@
             }
 
             if (sim.camMode === 0) {
-                // Caméra poursuite
                 const cx = sim.x - Math.sin(sim.tractorAngle) * 17;
                 const cz = sim.z - Math.cos(sim.tractorAngle) * 17;
                 camera.position.lerp(new THREE.Vector3(cx, 7.5, cz), 0.12);
                 camera.lookAt(sim.x, 2, sim.z);
             } else if (sim.camMode === 1) {
-                // Caméra rétroviseur (marche arrière)
                 const mx = sim.x - Math.cos(sim.tractorAngle) * 1.9 + Math.sin(sim.tractorAngle) * 1.5;
                 const mz = sim.z + Math.sin(sim.tractorAngle) * 1.9 + Math.cos(sim.tractorAngle) * 1.5;
                 camera.position.set(mx, 2.8, mz);
@@ -641,7 +589,6 @@
                 const lz = trailer.position.z - Math.cos(sim.trailerAngle) * 12;
                 camera.lookAt(lx, 1.0, lz);
             } else {
-                // Vue aérienne
                 camera.position.set(sim.x, 30, sim.z - 6);
                 camera.lookAt(sim.x, 0, sim.z);
             }
@@ -663,6 +610,16 @@
         });
 
         animate();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log("Service Worker enregistré avec succès !"))
+                    .catch((err) => console.log("Erreur d'enregistrement du Service Worker :", err));
+            });
+        }
     </script>
 </body>
 </html>
